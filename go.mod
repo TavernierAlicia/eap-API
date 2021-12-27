@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1 // indirect
+	github.com/boombuler/barcode v1.0.1 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/gin-gonic/gin v1.7.7 // indirect

@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -69,6 +70,18 @@ func PostDBSub(subForm Subscription) (err error, temptoken string) {
 					return err, temptoken
 				}
 				// insert other fields in database to make it work baby
+				_, err = db.Exec("UPDATE etabs SET qr_code_path = ? WHERE id = ? ", viper.GetString("links.cdn_qr")+fmt.Sprintf("%v", etabId)+".png", etabId)
+				if err != nil {
+					log.Error("failed to insert planning samples", zap.String("database", viper.GetString("database.dbname")),
+						zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+					fmt.Println(err)
+				} else {
+					err = CreateQR(viper.GetString("links.cdn_qr")+strconv.FormatInt(etabId, 10), etabId)
+					if err != nil {
+						log.Error("failed to create QRCode")
+						fmt.Println(err)
+					}
+				}
 				_, err = db.Exec("INSERT INTO planning (etab_id, day, start, end) VALUES (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?) ", etabId, 0, 540, 800, etabId, 0, 1000, 2000, etabId, 1, 540, 800, etabId, 1, 1000, 2000, etabId, 2, 540, 800, etabId, 2, 1000, 2000, etabId, 3, 540, 800, etabId, 3, 1000, 2000, etabId, 4, 540, 800, etabId, 4, 1000, 2000, etabId, 5, 540, 800, etabId, 5, 1000, 2000)
 				if err != nil {
 					log.Error("failed to insert planning samples", zap.String("database", viper.GetString("database.dbname")),

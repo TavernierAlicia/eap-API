@@ -1,6 +1,8 @@
 github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1 h1:OLrWlPirfG33eUv6tAZBb2SW2K+xBenfJIWJ+nORMTU=
 github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1/go.mod h1:v4YSuwMq3CcRnBfKwKzvCATH1jq46sgSHJ8EEUx2ne0=
 github.com/benbjohnson/clock v1.1.0/go.mod h1:J11/hYXuz8f4ySSvYwY0FKfm+ezbsZBKZxNJlLklBHA=
+github.com/boombuler/barcode v1.0.1 h1:NDBbPmhS+EqABEs5Kg3n/5ZNjy73Pz7SIV+KCeqyXcs=
+github.com/boombuler/barcode v1.0.1/go.mod h1:paBWMcWSl3LHKBqUq+rly7CNSldXjb2rDl3JlRe0mD8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/fsnotify/fsnotify v1.5.1 h1:mZcQUHVQUQWoPXXtuf9yuEXKudkV2sx1E06UadKWpgI=

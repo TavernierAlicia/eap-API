@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"image/png"
 	"os"
 
@@ -8,17 +9,20 @@ import (
 	"github.com/boombuler/barcode/qr"
 )
 
-func CreateQR() {
-	// Create the barcode
-	qrCode, _ := qr.Encode("https://github.com/boombuler/barcode", qr.M, qr.Auto)
+func CreateQR(link string, etabId int64) (err error) {
 
-	// Scale the barcode to 200x200 pixels
+	// Create the QRcode
+	qrCode, _ := qr.Encode(link, qr.M, qr.Auto)
+
+	// Scale image
 	qrCode, _ = barcode.Scale(qrCode, 200, 200)
 
 	// create the output file
-	file, _ := os.Create("./qr/qrcode.png")
+	file, _ := os.Create("./qr/" + fmt.Sprintf("%v", etabId) + ".png")
 	defer file.Close()
 
 	// encode the barcode as png
 	png.Encode(file, qrCode)
+
+	return err
 }
