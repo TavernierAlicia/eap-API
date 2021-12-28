@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"regexp"
 	"strconv"
 
@@ -14,8 +13,6 @@ func Subscribe(c *gin.Context) {
 	var subForm Subscription
 	var checkForm Subscription
 	c.BindJSON(&subForm)
-
-	fmt.Println(subForm)
 
 	// check data if not nil
 	var match bool
@@ -63,21 +60,143 @@ func Subscribe(c *gin.Context) {
 	}
 
 	if ok {
-		fmt.Println("ok on emballe")
 		err, temptoken := PostDBSub(subForm)
 		if err != nil {
-			fmt.Println("et c'est la merde")
 			// send error code
+			c.JSON(503, gin.H{
+				"message": "subscribtion failed",
+			})
 		} else {
 			err = AddPWD(subForm, temptoken)
+			// send error code
+			if err != nil {
+				c.JSON(503, gin.H{
+					"message": "subscribtion failed",
+				})
+			} else {
+				// send ok code
+				c.JSON(201, gin.H{
+					"message": "account created",
+				})
+			}
 		}
 	} else {
-		fmt.Println("renvoie une erreur")
-		// send reset password mail and 200
+		// send error code
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
 
 	}
 }
 
-// func Connect(c *gin.Context) {
+func createPWD(c *gin.Context) {
+	// recept data
+	var pwdForm PWD
+	var checkForm PWD
+	c.BindJSON(&pwdForm)
 
-// }
+	if pwdForm != checkForm && pwdForm.Token != "" && pwdForm.Password != "" && pwdForm.Confirm_password != "" && pwdForm.Id != 0 {
+		if pwdForm.Password == pwdForm.Confirm_password {
+			// check security token and insert new PWD
+			err := insertNewPWD(pwdForm)
+			if err != nil {
+				c.JSON(503, gin.H{
+					"message": "add pwd failed",
+				})
+			} else {
+				// send ok code
+				c.JSON(201, gin.H{
+					"message": "password created",
+				})
+			}
+		} else {
+			// send error code
+			c.JSON(422, gin.H{
+				"message": "passwords mismatch",
+			})
+		}
+	} else {
+		// send error code
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
+	}
+}
+
+func Connect(c *gin.Context) {
+	// recept data
+	var connForm ClientConn
+	var checkForm ClientConn
+	c.BindJSON(&connForm)
+
+	if checkForm != connForm && connForm.Mail != "" && connForm.Password != "" {
+		// check password
+		err, token := CliConnect(connForm)
+		if err != nil {
+			c.JSON(422, gin.H{
+				"message": "password mail mismatch",
+			})
+		} else {
+			// send ok code
+			c.JSON(200, gin.H{
+				"message": "connected",
+				"token":   token,
+			})
+		}
+	} else {
+		// send error code
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
+	}
+}
+
+func SM4resetPWD(c *gin.Context) {
+	mail := c.Request.Header.Get("mail")
+	etabId, err := strconv.ParseInt(c.Request.Header.Get("etabid"), 10, 64)
+
+	if mail != "" && etabId != 0 && err == nil {
+		// get owner infos for the mail
+		ownerInfos, err := getOwnerInfos(mail, etabId)
+		if err != nil {
+			// send error code
+			c.JSON(404, gin.H{
+				"message": "owner infos not found",
+			})
+		} else {
+			// Add security token
+			temptoken, err := AddSecuToken(etabId)
+			if err != nil {
+				c.JSON(503, gin.H{
+					"message": "add temptoken failed",
+				})
+			} else {
+				// disconnect everyone
+				err = ResetAllConn(etabId)
+
+				if err != nil {
+					c.JSON(503, gin.H{
+						"message": "reset connections failed",
+					})
+				} else {
+					err = NewPWD(ownerInfos, temptoken)
+					if err != nil {
+						c.JSON(503, gin.H{
+							"message": "send mail failed",
+						})
+					} else {
+						c.JSON(200, gin.H{
+							"message": "ready for password reset",
+						})
+					}
+				}
+			}
+		}
+	} else {
+		// send error code
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
+	}
+
+}

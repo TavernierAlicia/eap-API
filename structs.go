@@ -21,3 +21,38 @@ type Subscription struct {
 	Fact_city    string `json:"fact_city"`
 	Fact_country string `json:"fact_country"`
 }
+
+type Owner struct {
+	Civility string `db:"owner_civility"`
+	Name     string `db:"owner_name"`
+	Surname  string `db:"owner_surname"`
+	Mail     string `db:"mail"`
+	Entname  string `db:"name"`
+	Siret    string `db:"siret"`
+	Addr     string `db:"addr"`
+	Cp       int    `db:"cp"`
+	City     string `db:"city"`
+	Country  string `db:"country"`
+}
+
+type PWD struct {
+	Id               int    `json:"id"`
+	Token            string `json:"token"`
+	Password         string `json:"password"`
+	Confirm_password string `json:"password-confirm"`
+}
+
+type ClientConn struct {
+	Mail     string `json:"mail"`
+	Password string `json:"password"`
+}
+
+type Etab struct {
+	Id      int    `db:"id"`
+	Name    string `db:"name"`
+	Siret   string `db:"siret"`
+	Addr    string `db:"addr"`
+	Cp      int    `db:"cp"`
+	City    string `db:"city"`
+	Country string `db:"country"`
+}

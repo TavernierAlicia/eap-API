@@ -114,3 +114,150 @@ func PostDBSub(subForm Subscription) (err error, temptoken string) {
 	return err, temptoken
 
 }
+
+func insertNewPWD(pwdForm PWD) (err error) {
+	db := dbConnect()
+
+	ifExists := 0
+	var noRow = errors.New("sql: no rows in result set")
+	err = db.Get(&ifExists, "SELECT id FROM etabs WHERE id = ? AND security_token = ?", pwdForm.Id, pwdForm.Token)
+
+	if ifExists == 0 || (err != nil && err.Error() == noRow.Error()) {
+		err = errors.New("no matching row")
+		log.Error("no matching row", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	} else if err != nil {
+		log.Error("get row failed", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		err = errors.New("find row failed")
+	} else {
+		// go insert new data
+		_, err = db.Exec("UPDATE etabs SET hash_pwd = ?, security_token = NULL WHERE id = ? ", pwdForm.Password, pwdForm.Id)
+		if err != nil {
+			log.Error("get row failed", zap.String("database", viper.GetString("database.dbname")),
+				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+			err = errors.New("unable to add pwd")
+		}
+	}
+	return err
+}
+
+func CliConnect(connForm ClientConn) (err error, token string) {
+	db := dbConnect()
+
+	ifExists := 0
+	var noRow = errors.New("sql: no rows in result set")
+	err = db.Get(&ifExists, "SELECT id FROM etabs WHERE mail = ? AND hash_pwd = ?", connForm.Mail, connForm.Password)
+
+	if ifExists == 0 || (err != nil && err.Error() == noRow.Error()) {
+		err = errors.New("no matching row")
+		log.Error("no matching row", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	} else if err != nil {
+		log.Error("get row failed", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		err = errors.New("find row failed")
+	} else {
+		// create new auth token
+		token = uuid.New().String()
+
+		// insert connect data
+		_, err = db.Exec("INSERT INTO conections (etab_id, token) VALUES (?, ?)", ifExists, token)
+		if err != nil {
+			fmt.Println(err)
+			log.Error("insert row failed", zap.String("database", viper.GetString("database.dbname")),
+				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+			err = errors.New("insert connection row failed")
+		}
+	}
+	return err, token
+}
+
+func ResetAllConn(etabid int64) (err error) {
+
+	db := dbConnect()
+
+	_, err = db.Exec("DELETE FROM conections WHERE etab_id = ?", etabid)
+
+	fmt.Println(err)
+	if err != nil {
+		log.Error("delete all connections failed", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err
+}
+
+func getUserId(auth string) (userid int64, err error) {
+
+	db := dbConnect()
+
+	err = db.Get(&userid, "SELECT etab_id FROM conections WHERE token = ?", auth)
+
+	if err != nil {
+		log.Error("auth client failed", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		err = errors.New("get userid failed")
+	}
+
+	return userid, err
+}
+
+func dbGetEtabs(mail string) (err error, etabs []*Etab) {
+
+	db := dbConnect()
+
+	etabs = []*Etab{}
+
+	err = db.Select(&etabs, "SELECT id, name, siret, addr, cp, city, country FROM etabs WHERE mail = ?", mail)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("get etabs failed", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err, etabs
+}
+
+func getOwnerInfos(mail string, etabId int64) (ownerInfos Owner, err error) {
+	db := dbConnect()
+
+	err = db.Get(&ownerInfos, "SELECT owner_civility, owner_name, owner_surname, mail, name, siret, addr, cp, city, country FROM etabs WHERE id = ?", etabId)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot find owner data", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+	return ownerInfos, err
+}
+
+func AddSecuToken(etabId int64) (temptoken string, err error) {
+
+	db := dbConnect()
+
+	temptoken = uuid.New().String()
+
+	_, err = db.Exec("UPDATE etabs SET security_token = ? WHERE id = ?", temptoken, etabId)
+
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot add new secu token", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+	return temptoken, err
+}
+
+func dbDisconnect(auth string) (err error) {
+
+	db := dbConnect()
+
+	_, err = db.Exec("DELETE FROM conections WHERE token = ?", auth)
+
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot delete conenction", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err
+}

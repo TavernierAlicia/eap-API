@@ -14,21 +14,24 @@ func Router() {
 
 	//GET
 	// orders
+	router.GET("get-etabs4reset-pwd", getEtabs)
 	// router.GET(":etabid/orders", GetOrders)
 
 	//POST
 	// subscribe
 	router.POST("subscribe", Subscribe)
 	// connect
-	// router.POST("connect", Connect)
+	router.POST("connect", Connect)
+	// router.POST("QRconnect", Connect)
 	// password creation
-	// router.POST("pwd-create/:etabid", createPWD)
+	router.POST("pwd-create", createPWD)
+	router.POST("sendMail4reset-pwd", SM4resetPWD)
 
 	//PUT
 	// password edit
-	// router.PUT("pwd-edit/:etabid", editPWD)
-
 	//DELETE
+	router.DELETE("reset-all-connections", deleteAllconn)
+	router.DELETE("disconnect", disconnect)
 
 	// Cli part
 
