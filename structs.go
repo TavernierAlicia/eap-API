@@ -36,7 +36,6 @@ type Owner struct {
 }
 
 type PWD struct {
-	Id               int    `json:"id"`
 	Token            string `json:"token"`
 	Password         string `json:"password"`
 	Confirm_password string `json:"password-confirm"`
@@ -55,4 +54,19 @@ type Etab struct {
 	Cp      int    `db:"cp"`
 	City    string `db:"city"`
 	Country string `db:"country"`
+	Items   []*Menu
+}
+
+type ServQRToken struct {
+	Token string `json:"token"`
+}
+
+type Menu struct {
+	Id       int     `db:"id"`
+	Stock    bool    `db:"in_stock"`
+	Name     string  `db:"name"`
+	Desc     string  `db:"description"`
+	Price    float64 `db:"price"`
+	HHPrice  float64 `db:"priceHH"`
+	Category string  `db:"category"`
 }

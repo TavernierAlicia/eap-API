@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"regexp"
 	"strconv"
 
@@ -95,7 +96,7 @@ func createPWD(c *gin.Context) {
 	var checkForm PWD
 	c.BindJSON(&pwdForm)
 
-	if pwdForm != checkForm && pwdForm.Token != "" && pwdForm.Password != "" && pwdForm.Confirm_password != "" && pwdForm.Id != 0 {
+	if pwdForm != checkForm && pwdForm.Token != "" && pwdForm.Password != "" && pwdForm.Confirm_password != "" {
 		if pwdForm.Password == pwdForm.Confirm_password {
 			// check security token and insert new PWD
 			err := insertNewPWD(pwdForm)
@@ -199,4 +200,31 @@ func SM4resetPWD(c *gin.Context) {
 		})
 	}
 
+}
+
+func QRConnect(c *gin.Context) {
+	var authToken ServQRToken
+	var checkForm ServQRToken
+
+	c.BindJSON(&authToken)
+
+	if authToken != checkForm {
+		token, err := checkNcreateSession(authToken.Token)
+		fmt.Println(token)
+
+		if err != nil {
+			c.JSON(503, gin.H{
+				"message": "create connection failed",
+			})
+		} else {
+			c.JSON(200, gin.H{
+				"message": "connected",
+				"token":   token,
+			})
+		}
+	} else {
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
+	}
 }

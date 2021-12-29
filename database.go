@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -69,19 +68,7 @@ func PostDBSub(subForm Subscription) (err error, temptoken string) {
 					err = errors.New("something wrong happened")
 					return err, temptoken
 				}
-				// insert other fields in database to make it work baby
-				_, err = db.Exec("UPDATE etabs SET qr_code_path = ? WHERE id = ? ", viper.GetString("links.cdn_qr")+fmt.Sprintf("%v", etabId)+".png", etabId)
-				if err != nil {
-					log.Error("failed to insert planning samples", zap.String("database", viper.GetString("database.dbname")),
-						zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
-					fmt.Println(err)
-				} else {
-					err = CreateQR(viper.GetString("links.cdn_qr")+strconv.FormatInt(etabId, 10), etabId)
-					if err != nil {
-						log.Error("failed to create QRCode")
-						fmt.Println(err)
-					}
-				}
+
 				_, err = db.Exec("INSERT INTO planning (etab_id, day, start, end) VALUES (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?) ", etabId, 0, 540, 800, etabId, 0, 1000, 2000, etabId, 1, 540, 800, etabId, 1, 1000, 2000, etabId, 2, 540, 800, etabId, 2, 1000, 2000, etabId, 3, 540, 800, etabId, 3, 1000, 2000, etabId, 4, 540, 800, etabId, 4, 1000, 2000, etabId, 5, 540, 800, etabId, 5, 1000, 2000)
 				if err != nil {
 					log.Error("failed to insert planning samples", zap.String("database", viper.GetString("database.dbname")),
@@ -93,6 +80,34 @@ func PostDBSub(subForm Subscription) (err error, temptoken string) {
 					log.Error("failed to insert planning sample happy hours", zap.String("database", viper.GetString("database.dbname")),
 						zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
 					fmt.Println(err)
+				}
+				// insert serveurs token
+				serverToken := uuid.New().String()
+				_, err = db.Exec("INSERT INTO qr_tokens (etab_id, token, type) VALUES (?, ?, ?) ", etabId, serverToken, 1)
+				if err != nil {
+					log.Error("failed to insert sample product", zap.String("database", viper.GetString("database.dbname")),
+						zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+					fmt.Println(err)
+				} else {
+					err = CreateQR(serverToken, true)
+					if err != nil {
+						log.Error("failed to create QRCode")
+						fmt.Println(err)
+					}
+				}
+				// insert clients token
+				clientToken := uuid.New().String()
+				_, err = db.Exec("INSERT INTO qr_tokens (etab_id, token, type) VALUES (?, ?, ?) ", etabId, clientToken, 0)
+				if err != nil {
+					log.Error("failed to insert sample product", zap.String("database", viper.GetString("database.dbname")),
+						zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+					fmt.Println(err)
+				} else {
+					err = CreateQR(clientToken, false)
+					if err != nil {
+						log.Error("failed to create QRCode")
+						fmt.Println(err)
+					}
 				}
 				_, err = db.Exec("INSERT INTO items (etab_id, category) VALUES (?, ?) ", etabId, "Cocktails")
 				if err != nil {
@@ -120,7 +135,7 @@ func insertNewPWD(pwdForm PWD) (err error) {
 
 	ifExists := 0
 	var noRow = errors.New("sql: no rows in result set")
-	err = db.Get(&ifExists, "SELECT id FROM etabs WHERE id = ? AND security_token = ?", pwdForm.Id, pwdForm.Token)
+	err = db.Get(&ifExists, "SELECT id FROM etabs WHERE security_token = ?", pwdForm.Token)
 
 	if ifExists == 0 || (err != nil && err.Error() == noRow.Error()) {
 		err = errors.New("no matching row")
@@ -132,7 +147,7 @@ func insertNewPWD(pwdForm PWD) (err error) {
 		err = errors.New("find row failed")
 	} else {
 		// go insert new data
-		_, err = db.Exec("UPDATE etabs SET hash_pwd = ?, security_token = NULL WHERE id = ? ", pwdForm.Password, pwdForm.Id)
+		_, err = db.Exec("UPDATE etabs SET hash_pwd = ?, security_token = NULL WHERE id = ? ", pwdForm.Password, ifExists)
 		if err != nil {
 			log.Error("get row failed", zap.String("database", viper.GetString("database.dbname")),
 				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
@@ -260,4 +275,95 @@ func dbDisconnect(auth string) (err error) {
 	}
 
 	return err
+}
+
+func checkNcreateSession(authToken string) (token string, err error) {
+
+	db := dbConnect()
+
+	var ifExists int
+	var noRow = errors.New("sql: no rows in result set")
+
+	err = db.Get(&ifExists, "SELECT etab_id FROM qr_tokens WHERE token = ? ", authToken)
+
+	if ifExists == 0 || (err != nil && err.Error() == noRow.Error()) {
+		fmt.Println(err)
+		log.Error("This token doesn't exists", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+
+	} else if err != nil {
+		fmt.Println(err)
+		log.Error("cannot get row", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	} else {
+		// create new token
+		token = uuid.New().String()
+		_, err = db.Exec("INSERT INTO conections (etab_id, token, is_admin) VALUES (?, ?, ?)", ifExists, token, 0)
+		if err != nil {
+			fmt.Println(err)
+			log.Error("insert new row failed", zap.String("database", viper.GetString("database.dbname")),
+				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		}
+	}
+
+	return token, err
+}
+
+func checkCliToken(token string) (err error, etabid int) {
+
+	db := dbConnect()
+
+	var noRow = errors.New("sql: no rows in result set")
+
+	err = db.Get(&etabid, "SELECT etab_id FROM qr_tokens WHERE token = ? ", token)
+
+	if etabid == 0 || (err != nil && err.Error() == noRow.Error()) {
+		fmt.Println(err)
+		log.Error("This token doesn't exists", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+
+	} else if err != nil {
+		fmt.Println(err)
+		log.Error("cannot get row", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err, etabid
+}
+
+func insertCliSess(clientUuid string) (err error) {
+	db := dbConnect()
+
+	_, err = db.Exec("INSERT INTO cli_sess (cli_uuid) VALUES (?)", clientUuid)
+
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot insert row", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err
+}
+
+func getEtabMenu(etabid int) (err error, menu Etab) {
+
+	db := dbConnect()
+
+	menu = Etab{}
+
+	err = db.Get(&menu, "SELECT id, name, siret, addr, cp, city, country FROM etabs WHERE id = ?", etabid)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("get etab failed", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	err = db.Select(&menu.Items, "SELECT id, in_stock, name, description, price, priceHH, category FROM items WHERE etab_id = ?", etabid)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("get menu failed", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err, menu
 }

@@ -15,6 +15,7 @@ func Router() {
 	//GET
 	// orders
 	router.GET("get-etabs4reset-pwd", getEtabs)
+	router.GET("menu", getMenu)
 	// router.GET(":etabid/orders", GetOrders)
 
 	//POST
@@ -22,7 +23,7 @@ func Router() {
 	router.POST("subscribe", Subscribe)
 	// connect
 	router.POST("connect", Connect)
-	// router.POST("QRconnect", Connect)
+	router.POST("bartender", QRConnect)
 	// password creation
 	router.POST("pwd-create", createPWD)
 	router.POST("sendMail4reset-pwd", SM4resetPWD)
