@@ -61,7 +61,7 @@ func Subscribe(c *gin.Context) {
 	}
 
 	if ok {
-		err, temptoken := PostDBSub(subForm)
+		temptoken, err := PostDBSub(subForm)
 		if err != nil {
 			// send error code
 			c.JSON(503, gin.H{
@@ -132,7 +132,7 @@ func Connect(c *gin.Context) {
 
 	if checkForm != connForm && connForm.Mail != "" && connForm.Password != "" {
 		// check password
-		err, token := CliConnect(connForm)
+		token, err := CliConnect(connForm)
 		if err != nil {
 			c.JSON(422, gin.H{
 				"message": "password mail mismatch",

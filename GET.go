@@ -37,7 +37,7 @@ func getMenu(c *gin.Context) {
 			"message": "invalid entries",
 		})
 	} else {
-		err, etabid := checkCliToken(token)
+		etabid, err := checkCliToken(token)
 
 		if err != nil {
 			c.JSON(404, gin.H{
@@ -51,7 +51,7 @@ func getMenu(c *gin.Context) {
 					"message": "cli insertion failed",
 				})
 			} else {
-				err, menu := getEtabMenu(etabid)
+				menu, err := getEtabMenu(etabid)
 
 				if err != nil {
 					c.JSON(404, gin.H{
@@ -70,7 +70,7 @@ func getPlanning(c *gin.Context) {
 
 	if token != "" {
 		// check token && get etabid
-		err, etabid := checkCliToken(token)
+		etabid, err := checkCliToken(token)
 		if err != nil {
 			c.JSON(404, gin.H{
 				"message": "no QR for this token",

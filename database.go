@@ -42,7 +42,7 @@ func dbConnect() *sqlx.DB {
 	return db
 }
 
-func PostDBSub(subForm Subscription) (err error, temptoken string) {
+func PostDBSub(subForm Subscription) (temptoken string, err error) {
 	db := dbConnect()
 
 	// Verify if user already exists
@@ -66,7 +66,7 @@ func PostDBSub(subForm Subscription) (err error, temptoken string) {
 				etabId, err := insertEtab.LastInsertId()
 				if err != nil {
 					err = errors.New("something wrong happened")
-					return err, temptoken
+					return temptoken, err
 				}
 
 				_, err = db.Exec("INSERT INTO planning (etab_id, day, start, end) VALUES (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?) ", etabId, 0, 540, 800, etabId, 0, 1000, 2000, etabId, 1, 540, 800, etabId, 1, 1000, 2000, etabId, 2, 540, 800, etabId, 2, 1000, 2000, etabId, 3, 540, 800, etabId, 3, 1000, 2000, etabId, 4, 540, 800, etabId, 4, 1000, 2000, etabId, 5, 540, 800, etabId, 5, 1000, 2000)
@@ -126,7 +126,7 @@ func PostDBSub(subForm Subscription) (err error, temptoken string) {
 			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
 	}
 
-	return err, temptoken
+	return temptoken, err
 
 }
 
@@ -157,7 +157,7 @@ func insertNewPWD(pwdForm PWD) (err error) {
 	return err
 }
 
-func CliConnect(connForm ClientConn) (err error, token string) {
+func CliConnect(connForm ClientConn) (token string, err error) {
 	db := dbConnect()
 
 	ifExists := 0
@@ -185,7 +185,7 @@ func CliConnect(connForm ClientConn) (err error, token string) {
 			err = errors.New("insert connection row failed")
 		}
 	}
-	return err, token
+	return token, err
 }
 
 func ResetAllConn(etabid int64) (err error) {
@@ -218,7 +218,7 @@ func getUserId(auth string) (userid int64, err error) {
 	return userid, err
 }
 
-func dbGetEtabs(mail string) (err error, etabs []*Etab) {
+func dbGetEtabs(mail string) (etabs []*Etab, err error) {
 
 	db := dbConnect()
 
@@ -231,7 +231,7 @@ func dbGetEtabs(mail string) (err error, etabs []*Etab) {
 			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
 	}
 
-	return err, etabs
+	return etabs, err
 }
 
 func getOwnerInfos(mail string, etabId int64) (ownerInfos Owner, err error) {
@@ -309,7 +309,7 @@ func checkNcreateSession(authToken string) (token string, err error) {
 	return token, err
 }
 
-func checkCliToken(token string) (err error, etabid int) {
+func checkCliToken(token string) (etabid int, err error) {
 
 	db := dbConnect()
 
@@ -328,7 +328,7 @@ func checkCliToken(token string) (err error, etabid int) {
 			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
 	}
 
-	return err, etabid
+	return etabid, err
 }
 
 func insertCliSess(clientUuid string) (err error) {
@@ -365,7 +365,7 @@ func insertCliSess(clientUuid string) (err error) {
 	return err
 }
 
-func getEtabMenu(etabid int) (err error, menu Etab) {
+func getEtabMenu(etabid int) (menu Etab, err error) {
 
 	db := dbConnect()
 
@@ -385,7 +385,7 @@ func getEtabMenu(etabid int) (err error, menu Etab) {
 			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
 	}
 
-	return err, menu
+	return menu, err
 }
 
 func dbGetPlanning(etabid int) (planning []*Planning, err error) {
