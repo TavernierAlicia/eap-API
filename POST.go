@@ -161,7 +161,7 @@ func SM4resetPWD(c *gin.Context) {
 		ownerInfos, err := getOwnerInfos(mail, etabId)
 		if err != nil {
 			// send error code
-			c.JSON(404, gin.H{
+			c.JSON(401, gin.H{
 				"message": "owner infos not found",
 			})
 		} else {
@@ -222,6 +222,48 @@ func QRConnect(c *gin.Context) {
 				"token":   token,
 			})
 		}
+	} else {
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
+	}
+}
+
+func placeOrder(c *gin.Context) {
+	var PLOrder Order
+
+	c.BindJSON(&PLOrder)
+
+	if PLOrder.Cli_uuid != "" && PLOrder.Token != "" && len(PLOrder.Order_items) != 0 {
+		// check token && get etabid
+		etabid, err := checkCliToken(PLOrder.Token)
+
+		if err != nil {
+			c.JSON(401, gin.H{
+				"message": "no QR for this token",
+			})
+		} else {
+			// check client_uuid
+			err := insertCliSess(PLOrder.Cli_uuid)
+
+			if err != nil {
+				c.JSON(404, gin.H{
+					"message": "cli insertion failed",
+				})
+			} else {
+				// Now insert order
+				orderid, err := dbPlaceOrder(PLOrder, etabid)
+
+				if err != nil {
+					c.JSON(404, gin.H{
+						"message": "cli insertion failed",
+					})
+				} else {
+					c.JSON(200, orderid)
+				}
+			}
+		}
+
 	} else {
 		c.JSON(422, gin.H{
 			"message": "invalid entries",

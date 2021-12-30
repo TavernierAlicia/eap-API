@@ -78,3 +78,45 @@ type Planning struct {
 	Is_Active bool `db:"is_active"`
 	Is_HH     bool `db:"is_HH"`
 }
+
+type Order struct {
+	Cli_uuid    string        `json:"cli_uuid"`
+	Token       string        `json:"token"`
+	TotalTTC    float64       `json:"totalTTC"`
+	TotalHT     float64       `json:"totalHT"`
+	Order_items []*OrderItems `json:"Order_items"`
+}
+
+type OrderItems struct {
+	Item_id  int     `json:"item_id"`
+	Price    float64 `json:"price"`
+	Quantity int     `json:"quantity"`
+}
+
+type OrderDetails struct {
+	Cli_uuid  string `json:"cli_uuid"`
+	Token     string `json:"token"`
+	OrderId   int    `json:"order_id"`
+	Confirmed bool   `json:"confirmed"`
+	Ready     bool   `json:"ready"`
+	Done      bool   `json:"done"`
+}
+
+type ReturnOrders struct {
+	Id          int     `db:"id"`
+	Cli_uuid    string  `db:"cli_uuid"`
+	TotalTTC    float64 `db:"totalTTC"`
+	TotalHT     float64 `db:"totalHT"`
+	Confirmed   bool    `db:"confirmed"`
+	Ready       bool    `db:"ready"`
+	Done        bool    `db:"done"`
+	Date        string  `db:"created"`
+	Order_items []*Items
+}
+
+type Items struct {
+	Name     string  `db:"name"`
+	Quantity int     `db:"quantity"`
+	Price    float64 `db:"price"`
+	Category string  `db:"category"`
+}

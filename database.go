@@ -331,6 +331,28 @@ func checkCliToken(token string) (etabid int, err error) {
 	return etabid, err
 }
 
+func checkToken(token string) (etabid int, err error) {
+
+	db := dbConnect()
+
+	var noRow = errors.New("sql: no rows in result set")
+
+	err = db.Get(&etabid, "SELECT etab_id FROM conections WHERE token = ? ", token)
+
+	if etabid == 0 || (err != nil && err.Error() == noRow.Error()) {
+		fmt.Println(err)
+		log.Error("This token doesn't exists", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+
+	} else if err != nil {
+		fmt.Println(err)
+		log.Error("cannot get row", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return etabid, err
+}
+
 func insertCliSess(clientUuid string) (err error) {
 	db := dbConnect()
 
@@ -360,6 +382,28 @@ func insertCliSess(clientUuid string) (err error) {
 			log.Error("cannot update row", zap.String("database", viper.GetString("database.dbname")),
 				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
 		}
+	}
+
+	return err
+}
+
+func checkCliSess(cli_uuid string, orderid int64) (err error) {
+	db := dbConnect()
+
+	var ifExists int
+	var noRow = errors.New("sql: no rows in result set")
+
+	err = db.Get(&ifExists, "SELECT id FROM orders WHERE cli_uuid = ? AND id = ?", cli_uuid, orderid)
+
+	if ifExists == 0 || (err != nil && err.Error() == noRow.Error()) {
+		fmt.Println(err)
+		log.Error("cannot find row", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+
+	} else if err != nil {
+		fmt.Println(err)
+		log.Error("cannot request row", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
 	}
 
 	return err
@@ -401,4 +445,98 @@ func dbGetPlanning(etabid int) (planning []*Planning, err error) {
 	}
 
 	return planning, err
+}
+
+func dbPlaceOrder(PLOrder Order, etabid int) (orderid int64, err error) {
+	db := dbConnect()
+
+	// insert order
+	insertOrder, err := db.Exec("INSERT INTO orders (cli_uuid, etab_id, totalTTC, totalHT) VALUES (?, ?, ?, ?)", PLOrder.Cli_uuid, etabid, PLOrder.TotalTTC, PLOrder.TotalHT)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot insert row", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	} else {
+		// get orderid
+		orderid, err = insertOrder.LastInsertId()
+		if err != nil {
+			fmt.Println(err)
+			log.Error("order not inserted", zap.String("database", viper.GetString("database.dbname")),
+				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		} else {
+			// insert all items
+			for _, item := range PLOrder.Order_items {
+				fmt.Println(item.Item_id)
+				_, err := db.Exec("INSERT INTO order_items (item_id, order_id, price, quantity) VALUES (?, ?, ?, ?)", item.Item_id, orderid, item.Price, item.Quantity)
+				if err != nil {
+					fmt.Println(err)
+					log.Error("item not inserted", zap.String("database", viper.GetString("database.dbname")),
+						zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+				}
+			}
+		}
+	}
+
+	return orderid, err
+}
+
+func dbUpdateOrderStatus(details OrderDetails) (err error) {
+	db := dbConnect()
+
+	// update only confirmed
+	_, err = db.Exec("UPDATE orders SET confirmed = ? WHERE id = ?", details.Confirmed, details.OrderId)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot update order", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err
+}
+
+func dbGetOrders(etabid int) (orders []*ReturnOrders, err error) {
+
+	db := dbConnect()
+	orders = []*ReturnOrders{}
+
+	err = db.Select(&orders, "SELECT id, cli_uuid, totalTTC, totalHT, confirmed, ready, done, created FROM orders WHERE etab_id = ?", etabid)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("get order failed", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	for i, _ := range orders {
+
+		err = db.Select(&orders[i].Order_items, "SELECT order_items.quantity, order_items.price, items.category, items.name FROM order_items JOIN items ON order_items.item_id = items.id WHERE order_id = ?", orders[0].Id)
+		if err != nil {
+			fmt.Println(err)
+			log.Error("get order items failed", zap.String("database", viper.GetString("database.dbname")),
+				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		}
+	}
+
+	return orders, err
+}
+
+func dbGetOrder(orderid int64) (order ReturnOrders, err error) {
+
+	db := dbConnect()
+	// orders = ReturnOrders
+
+	err = db.Get(&order, "SELECT id, cli_uuid, totalTTC, totalHT, confirmed, ready, done, created FROM orders WHERE id = ?", orderid)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("get order failed", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	err = db.Select(&order.Order_items, "SELECT order_items.quantity, order_items.price, items.category, items.name FROM order_items JOIN items ON order_items.item_id = items.id WHERE order_id = ?", orderid)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("get order items failed", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return order, err
 }

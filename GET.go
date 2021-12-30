@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -40,7 +42,7 @@ func getMenu(c *gin.Context) {
 		etabid, err := checkCliToken(token)
 
 		if err != nil {
-			c.JSON(404, gin.H{
+			c.JSON(401, gin.H{
 				"message": "no QR for this token",
 			})
 		} else {
@@ -72,9 +74,23 @@ func getPlanning(c *gin.Context) {
 		// check token && get etabid
 		etabid, err := checkCliToken(token)
 		if err != nil {
-			c.JSON(404, gin.H{
-				"message": "no QR for this token",
-			})
+			// try same for boss
+			etabid, err := checkToken(token)
+
+			if err != nil {
+				c.JSON(401, gin.H{
+					"message": "no user for this token",
+				})
+			} else {
+				planning, err := dbGetPlanning(etabid)
+				if err != nil {
+					c.JSON(404, gin.H{
+						"message": "planning not found",
+					})
+				} else {
+					c.JSON(200, planning)
+				}
+			}
 		} else {
 			planning, err := dbGetPlanning(etabid)
 			if err != nil {
@@ -83,6 +99,72 @@ func getPlanning(c *gin.Context) {
 				})
 			} else {
 				c.JSON(200, planning)
+			}
+		}
+	} else {
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
+	}
+}
+
+func GetOrders(c *gin.Context) {
+	token := c.Request.Header.Get("token")
+
+	if token != "" {
+		etabid, err := checkToken(token)
+
+		if err != nil {
+			c.JSON(401, gin.H{
+				"message": "no user for this token",
+			})
+		} else {
+			orders, err := dbGetOrders(etabid)
+			if err != nil {
+				c.JSON(404, gin.H{
+					"message": "planning not found",
+				})
+			} else {
+				c.JSON(200, orders)
+			}
+		}
+	} else {
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
+	}
+}
+
+func GetOrder(c *gin.Context) {
+	token := c.Request.Header.Get("token")
+	orderid, err := strconv.ParseInt(c.Request.Header.Get("order_id"), 10, 64)
+	cli_uuid := c.Request.Header.Get("cli_uuid")
+
+	if token != "" && orderid != 0 && err == nil {
+		// check cli token
+		_, err := checkCliToken(token)
+
+		if err != nil {
+			c.JSON(401, gin.H{
+				"message": "no user for this token",
+			})
+		} else {
+			// check cli_uuid
+			err := checkCliSess(cli_uuid, orderid)
+
+			if err != nil {
+				c.JSON(404, gin.H{
+					"message": "no client with this id",
+				})
+			} else {
+				order, err := dbGetOrder(orderid)
+				if err != nil {
+					c.JSON(404, gin.H{
+						"message": "planning not found",
+					})
+				} else {
+					c.JSON(200, order)
+				}
 			}
 		}
 	} else {
