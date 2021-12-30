@@ -70,3 +70,11 @@ type Menu struct {
 	HHPrice  float64 `db:"priceHH"`
 	Category string  `db:"category"`
 }
+
+type Planning struct {
+	Day       int  `db:"day"`
+	Start     int  `db:"start"`
+	End       int  `db:"end"`
+	Is_Active bool `db:"is_active"`
+	Is_HH     bool `db:"is_HH"`
+}

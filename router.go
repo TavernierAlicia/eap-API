@@ -16,6 +16,7 @@ func Router() {
 	// orders
 	router.GET("get-etabs4reset-pwd", getEtabs)
 	router.GET("menu", getMenu)
+	router.GET("planning", getPlanning)
 	// router.GET(":etabid/orders", GetOrders)
 
 	//POST

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -53,7 +51,6 @@ func getMenu(c *gin.Context) {
 					"message": "cli insertion failed",
 				})
 			} else {
-				fmt.Println(etabid)
 				err, menu := getEtabMenu(etabid)
 
 				if err != nil {
@@ -65,5 +62,32 @@ func getMenu(c *gin.Context) {
 				}
 			}
 		}
+	}
+}
+
+func getPlanning(c *gin.Context) {
+	token := c.Request.Header.Get("token")
+
+	if token != "" {
+		// check token && get etabid
+		err, etabid := checkCliToken(token)
+		if err != nil {
+			c.JSON(404, gin.H{
+				"message": "no QR for this token",
+			})
+		} else {
+			planning, err := dbGetPlanning(etabid)
+			if err != nil {
+				c.JSON(404, gin.H{
+					"message": "planning not found",
+				})
+			} else {
+				c.JSON(200, planning)
+			}
+		}
+	} else {
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
 	}
 }

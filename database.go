@@ -334,12 +334,32 @@ func checkCliToken(token string) (err error, etabid int) {
 func insertCliSess(clientUuid string) (err error) {
 	db := dbConnect()
 
-	_, err = db.Exec("INSERT INTO cli_sess (cli_uuid) VALUES (?)", clientUuid)
+	var ifExists int
+	var noRow = errors.New("sql: no rows in result set")
 
-	if err != nil {
+	err = db.Get(&ifExists, "SELECT id FROM cli_sess WHERE cli_uuid = ? ", clientUuid)
+
+	if ifExists == 0 || (err != nil && err.Error() == noRow.Error()) {
+
+		_, err = db.Exec("INSERT INTO cli_sess (cli_uuid) VALUES (?)", clientUuid)
+
+		if err != nil {
+			fmt.Println(err)
+			log.Error("cannot insert row", zap.String("database", viper.GetString("database.dbname")),
+				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		}
+	} else if err != nil {
 		fmt.Println(err)
-		log.Error("cannot insert row", zap.String("database", viper.GetString("database.dbname")),
+		log.Error("cannot get row", zap.String("database", viper.GetString("database.dbname")),
 			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	} else {
+		// clientuuid already here, update date
+		_, err = db.Exec("UPDATE cli_sess SET updated = ? WHERE cli_uuid = ?", time.Now(), clientUuid)
+		if err != nil {
+			fmt.Println(err)
+			log.Error("cannot update row", zap.String("database", viper.GetString("database.dbname")),
+				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		}
 	}
 
 	return err
@@ -366,4 +386,19 @@ func getEtabMenu(etabid int) (err error, menu Etab) {
 	}
 
 	return err, menu
+}
+
+func dbGetPlanning(etabid int) (planning []*Planning, err error) {
+
+	db := dbConnect()
+
+	err = db.Select(&planning, "SELECT day, start, end, is_active, is_HH FROM planning WHERE etab_id = ? ORDER BY day asc", etabid)
+
+	if err != nil {
+		fmt.Println(err)
+		log.Error("get planning failed", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return planning, err
 }
