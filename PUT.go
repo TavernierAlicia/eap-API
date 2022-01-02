@@ -39,3 +39,79 @@ func updateOrderStatus(c *gin.Context) {
 		})
 	}
 }
+
+func EditEtabParams(c *gin.Context) {
+	etabid, err := checkAuth(c)
+
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "not connected",
+		})
+	} else {
+		var params EtabParams
+
+		c.BindJSON(&params)
+
+		if err != nil || params.Etab_name == "" {
+			c.JSON(422, gin.H{
+				"message": "invalid entries",
+			})
+		} else {
+			err = dbUpdateEtabParams(params, etabid)
+			if err != nil {
+				c.JSON(500, gin.H{
+					"message": "cannot update params",
+				})
+			} else {
+				getEtabParams(c)
+			}
+		}
+	}
+}
+
+func EditProfile(c *gin.Context) {
+	etabid, err := checkAuth(c)
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "not connected",
+		})
+	} else {
+		var profile Profile
+		var checkProfile Profile
+
+		c.BindJSON(&profile)
+
+		if profile != checkProfile {
+			etabs, err := dbGetEtabs(profile.Mail)
+			var ifExists bool
+
+			if err == nil {
+				ifExists = true
+				for _, etab := range etabs {
+					if int64(etab.Id) == etabid {
+						ifExists = false
+						break
+					}
+				}
+			} else {
+				ifExists = false
+			}
+
+			if ifExists == false {
+				err = dbUpdateProfile(profile, etabid)
+				if err != nil {
+					c.JSON(500, gin.H{
+						"message": "cannot update profile",
+					})
+				} else {
+					getProfile(c)
+				}
+			} else {
+				c.JSON(401, gin.H{
+					"message": "mail already taken",
+				})
+			}
+		}
+	}
+
+}

@@ -17,8 +17,13 @@ func Router() {
 	router.GET("get-etabs4reset-pwd", getEtabs)
 	router.GET("menu", getMenu)
 	router.GET("planning", getPlanning)
-	router.GET("/orders", GetOrders)
-	router.GET("/order", GetOrder)
+	router.GET("orders", GetOrders)
+	router.GET("order", GetOrder)
+	router.GET("sendmail-fact", sendFact)
+	router.GET("fact-link", factLink)
+	router.GET("worker-fact", bossFact) // TODO: make fact
+	router.GET("etab-params", getEtabParams)
+	router.GET("profile", getProfile)
 
 	//POST
 	// subscribe
@@ -34,6 +39,8 @@ func Router() {
 
 	//PUT
 	router.PUT("update-order", updateOrderStatus)
+	router.PUT("etab-params", EditEtabParams)
+	router.PUT("profile", EditProfile)
 
 	//DELETE
 	router.DELETE("reset-all-connections", deleteAllconn)

@@ -540,3 +540,134 @@ func dbGetOrder(orderid int64) (order ReturnOrders, err error) {
 
 	return order, err
 }
+
+func getOrderFact(orderid int64) (link string, err error) {
+	db := dbConnect()
+
+	var noRow = errors.New("sql: no rows in result set")
+
+	err = db.Get(&link, "SELECT fact_link FROM orders WHERE id = ?", orderid)
+
+	if link == "" || (err != nil && err.Error() == noRow.Error()) {
+		fmt.Println(err)
+		log.Error("cannot find row", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+
+	} else if err != nil {
+		fmt.Println(err)
+		log.Error("cannot request row", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return link, err
+
+}
+
+func getFactEtab(etabid int64) (etab FactEtab, err error) {
+
+	db := dbConnect()
+	err = db.Get(&etab, "SELECT name, owner_civility, owner_name, owner_surname, mail, phone, fact_addr, fact_cp, fact_city, fact_country, offer FROM etabs WHERE etabs.id = ?", etabid)
+
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot get etab infos", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	} else {
+		// get offer
+
+		err = db.Get(&etab.Etab_offer, "SELECT offers.name, offers.priceHT, offers.priceTTC FROM offers WHERE id = ?", etab.Offer)
+		if err != nil {
+			fmt.Println(err)
+			log.Error("cannot get etab offer", zap.String("database", viper.GetString("database.dbname")),
+				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		}
+	}
+
+	return etab, err
+}
+
+func dbGetEtabParams(etabid int64) (params EtabParams, err error) {
+
+	db := dbConnect()
+
+	err = db.Get(&params, "SELECT name, phone, addr, cp, city, country, IFNULL(insta, '') AS insta , IFNULL(twitter, '') AS twitter, IFNULL(facebook, '') AS facebook, licence, siret FROM etabs WHERE etabs.id = ?", etabid)
+
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot get etab params", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	} else {
+
+		err = db.Select(&params.Horaires, "SELECT day, start, end, is_active, is_HH FROM planning WHERE etab_id = ?", etabid)
+		if err != nil {
+			fmt.Println(err)
+			log.Error("cannot get etab planning", zap.String("database", viper.GetString("database.dbname")),
+				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		}
+	}
+
+	return params, err
+}
+
+func dbUpdateEtabParams(params EtabParams, etabid int64) (err error) {
+	db := dbConnect()
+
+	_, err = db.Exec("UPDATE etabs SET name = ?, addr = ?, cp = ?, city = ?, country = ?, licence = ?, siret = ?, phone = ?, insta = ?, twitter = ?, facebook = ? WHERE id = ?", params.Etab_name, params.Addr, params.Cp, params.City, params.Country, params.License, params.Siret, params.Phone, params.Insta, params.Twitter, params.Facebook, etabid)
+
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot update etab params", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	} else {
+		// update etab planning
+
+		// first delete all rows
+		_, err = db.Exec("DELETE FROM planning WHERE etab_id = ?", etabid)
+
+		if err != nil {
+			fmt.Println(err)
+			log.Error("cannot delete etab planning", zap.String("database", viper.GetString("database.dbname")),
+				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		}
+
+		// then insert new ones
+		for _, planning := range params.Horaires {
+			_, err = db.Exec("INSERT INTO planning (etab_id, day, start, end, is_active, is_HH) VALUES (?, ?, ?, ?, ?, ?)", etabid, planning.Day, planning.Start, planning.End, planning.Is_Active, planning.Is_HH)
+
+			if err != nil {
+				fmt.Println(err)
+				log.Error("cannot insert planning", zap.String("database", viper.GetString("database.dbname")),
+					zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+			}
+		}
+	}
+	return err
+}
+
+func dbGetProfile(etabid int64) (profile Profile, err error) {
+	db := dbConnect()
+
+	err = db.Get(&profile, "SELECT mail, owner_civility, owner_name, owner_surname FROM etabs WHERE id = ?", etabid)
+
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot get profile", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return profile, err
+}
+
+func dbUpdateProfile(profile Profile, etabid int64) (err error) {
+
+	db := dbConnect()
+	_, err = db.Exec("UPDATE etabs SET owner_civility = ?, owner_name = ?, owner_surname = ?, mail = ? WHERE id = ?", profile.Civility, profile.Name, profile.Surname, profile.Mail, etabid)
+
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot update profile", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err
+}

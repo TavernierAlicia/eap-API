@@ -1,7 +1,9 @@
 package main
 
 import (
+	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -160,7 +162,7 @@ func GetOrder(c *gin.Context) {
 				order, err := dbGetOrder(orderid)
 				if err != nil {
 					c.JSON(404, gin.H{
-						"message": "planning not found",
+						"message": "order not found",
 					})
 				} else {
 					c.JSON(200, order)
@@ -172,4 +174,144 @@ func GetOrder(c *gin.Context) {
 			"message": "invalid entries",
 		})
 	}
+}
+
+func sendFact(c *gin.Context) {
+	token := c.Request.Header.Get("token")
+	orderid, err := strconv.ParseInt(c.Request.Header.Get("order_id"), 10, 64)
+	cli_uuid := c.Request.Header.Get("cli_uuid")
+	mail := c.Request.Header.Get("mail")
+
+	if token != "" && orderid != 0 && err == nil && mail != "" {
+		// check cli token
+		_, err := checkCliToken(token)
+
+		if err != nil {
+			c.JSON(404, gin.H{
+				"message": "no QR with this token",
+			})
+		} else {
+			err := checkCliSess(cli_uuid, orderid)
+
+			if err != nil {
+				c.JSON(404, gin.H{
+					"message": "no client with this id",
+				})
+			} else {
+				// get fact link
+				link, err := getOrderFact(orderid)
+				if err != nil {
+					c.JSON(404, gin.H{
+						"message": "no fact found",
+					})
+				} else {
+					// let's send this fact
+					fmt.Println("ready to send " + link)
+					err := sendCliFact(link, mail)
+					if err != nil {
+						c.JSON(500, gin.H{
+							"message": "cannot send mail",
+						})
+					} else {
+						c.JSON(200, "mail send")
+					}
+				}
+			}
+		}
+	} else {
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
+	}
+}
+
+func factLink(c *gin.Context) {
+	orderid, err := strconv.ParseInt(c.Request.Header.Get("order_id"), 10, 64)
+
+	if orderid != 0 && err == nil {
+
+		// get fact link
+		link, err := getOrderFact(orderid)
+		if err != nil {
+			c.JSON(404, gin.H{
+				"message": "no fact found",
+			})
+		} else {
+
+			c.JSON(200, link)
+		}
+	} else {
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
+	}
+}
+
+func bossFact(c *gin.Context) {
+	etabid, err := strconv.ParseInt(c.Request.Header.Get("etab_id"), 10, 64)
+
+	if err == nil {
+		// get etab infos
+		etab, err := getFactEtab(etabid)
+
+		if err != nil {
+			c.JSON(404, gin.H{
+				"message": "offer not found",
+			})
+		} else {
+
+			// TODO: generate fact
+			etab.Fact_infos.Link = "../tests/zpl.pdf"
+			etab.Fact_infos.Date = time.Now().Format("02-01-2006")
+
+			// send fact
+			sendBossFact(etab)
+		}
+
+	} else {
+		c.JSON(422, gin.H{
+			"message": "invalid entries",
+		})
+	}
+}
+
+func getEtabParams(c *gin.Context) {
+	etabid, err := checkAuth(c)
+
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "not connected",
+		})
+	} else {
+		params, err := dbGetEtabParams(etabid)
+
+		if err != nil {
+			c.JSON(404, gin.H{
+				"message": "params not found",
+			})
+		} else {
+			c.JSON(200, params)
+		}
+	}
+}
+
+func getProfile(c *gin.Context) {
+	etabid, err := checkAuth(c)
+
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "not connected",
+		})
+	} else {
+		profile, err := dbGetProfile(etabid)
+
+		if err != nil {
+			c.JSON(404, gin.H{
+				"message": "profile not found",
+			})
+		} else {
+			c.JSON(200, profile)
+		}
+	}
+
 }
