@@ -671,3 +671,30 @@ func dbUpdateProfile(profile Profile, etabid int64) (err error) {
 
 	return err
 }
+
+func dbGetPaymentMethods(etabid int64) (pay Payment, err error) {
+
+	db := dbConnect()
+	err = db.Get(&pay, "SELECT iban, name_iban, fact_addr, fact_cp, fact_city, fact_country FROM etabs WHERE id = ?", etabid)
+
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot get payment method", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return pay, err
+}
+
+func dbUpdatePaymentMethod(pay Payment, etabid int64) (err error) {
+	db := dbConnect()
+
+	_, err = db.Exec("UPDATE etabs SET iban = ?, name_iban = ?, fact_addr = ?, fact_cp = ?, fact_city = ?, fact_country = ? WHERE id = ?", pay.Iban, pay.Name_iban, pay.Fact_addr, pay.Fact_cp, pay.Fact_city, pay.Fact_country, etabid)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot update payment method", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err
+}

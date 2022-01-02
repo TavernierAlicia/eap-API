@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -52,7 +54,7 @@ func EditEtabParams(c *gin.Context) {
 
 		c.BindJSON(&params)
 
-		if err != nil || params.Etab_name == "" {
+		if err != nil || params.Etab_name == "" || !regSiret(params.Siret) || !regPhone(params.Phone) {
 			c.JSON(422, gin.H{
 				"message": "invalid entries",
 			})
@@ -81,7 +83,7 @@ func EditProfile(c *gin.Context) {
 
 		c.BindJSON(&profile)
 
-		if profile != checkProfile {
+		if profile != checkProfile && regMail(profile.Mail) {
 			etabs, err := dbGetEtabs(profile.Mail)
 			var ifExists bool
 
@@ -111,7 +113,42 @@ func EditProfile(c *gin.Context) {
 					"message": "mail already taken",
 				})
 			}
+		} else {
+			c.JSON(422, gin.H{
+				"message": "invalid entries",
+			})
 		}
 	}
 
+}
+
+func EditPaymentMethod(c *gin.Context) {
+	etabid, err := checkAuth(c)
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "not connected",
+		})
+	} else {
+		var pay Payment
+		var checkPay Payment
+
+		c.BindJSON(&pay)
+
+		if pay != checkPay && regIban(pay.Iban) && regCP(strconv.Itoa(pay.Fact_cp)) {
+			err = dbUpdatePaymentMethod(pay, etabid)
+
+			if err != nil {
+				c.JSON(500, gin.H{
+					"message": "cannot update payment method",
+				})
+			} else {
+				getPaymentMethod(c)
+			}
+
+		} else {
+			c.JSON(422, gin.H{
+				"message": "invalid entries",
+			})
+		}
+	}
 }

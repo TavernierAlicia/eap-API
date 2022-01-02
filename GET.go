@@ -315,3 +315,23 @@ func getProfile(c *gin.Context) {
 	}
 
 }
+
+func getPaymentMethod(c *gin.Context) {
+	etabid, err := checkAuth(c)
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "not connected",
+		})
+	} else {
+		pay, err := dbGetPaymentMethods(etabid)
+
+		if err != nil {
+			c.JSON(404, gin.H{
+				"message": "payment method not found",
+			})
+		} else {
+			c.JSON(200, pay)
+		}
+	}
+
+}

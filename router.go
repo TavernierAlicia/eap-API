@@ -24,6 +24,7 @@ func Router() {
 	router.GET("worker-fact", bossFact) // TODO: make fact
 	router.GET("etab-params", getEtabParams)
 	router.GET("profile", getProfile)
+	router.GET("payment-method", getPaymentMethod)
 
 	//POST
 	// subscribe
@@ -41,6 +42,7 @@ func Router() {
 	router.PUT("update-order", updateOrderStatus)
 	router.PUT("etab-params", EditEtabParams)
 	router.PUT("profile", EditProfile)
+	router.PUT("payment-method", EditPaymentMethod)
 
 	//DELETE
 	router.DELETE("reset-all-connections", deleteAllconn)

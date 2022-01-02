@@ -169,3 +169,12 @@ type Profile struct {
 	Surname  string `db:"owner_surname"`
 	Mail     string `db:"mail"`
 }
+
+type Payment struct {
+	Iban         string `db:"iban"`
+	Name_iban    string `db:"name_iban"`
+	Fact_addr    string `db:"fact_addr"`
+	Fact_cp      int    `db:"fact_cp"`
+	Fact_city    string `db:"fact_city"`
+	Fact_country string `db:"fact_country"`
+}
