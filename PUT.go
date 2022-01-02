@@ -152,3 +152,58 @@ func EditPaymentMethod(c *gin.Context) {
 		}
 	}
 }
+
+func EditOffers(c *gin.Context) {
+	etabid, err := checkAuth(c)
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "not connected",
+		})
+	} else {
+		offerid, err := strconv.ParseInt(c.Request.Header.Get("offer_id"), 10, 64)
+
+		if err != nil {
+			c.JSON(422, gin.H{
+				"message": "invalid entries",
+			})
+		} else {
+			err = dbUpdateOffer(etabid, offerid)
+			if err != nil {
+				c.JSON(500, gin.H{
+					"message": "cannot update offer",
+				})
+			} else {
+				getEtabOffer(c)
+			}
+		}
+	}
+}
+
+func PutItem(c *gin.Context) {
+	_, err := checkAuth(c)
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "not connected",
+		})
+	} else {
+		var item Item
+		c.BindJSON(&item)
+
+		if item.Name != "" && item.Description != "" {
+			err = dbEditItem(item)
+
+			if err != nil {
+				c.JSON(503, gin.H{
+					"message": "cannot update item",
+				})
+			} else {
+				c.JSON(200, "Updated")
+			}
+
+		} else {
+			c.JSON(422, gin.H{
+				"message": "invalid entries",
+			})
+		}
+	}
+}

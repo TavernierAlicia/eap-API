@@ -25,6 +25,7 @@ func Router() {
 	router.GET("etab-params", getEtabParams)
 	router.GET("profile", getProfile)
 	router.GET("payment-method", getPaymentMethod)
+	router.GET("offers", getEtabOffer)
 
 	//POST
 	// subscribe
@@ -37,16 +38,20 @@ func Router() {
 	router.POST("sendMail4reset-pwd", SM4resetPWD)
 	// place order
 	router.POST("place-order", placeOrder) // TODO: make fact
+	router.POST("item", PostItem)
 
 	//PUT
 	router.PUT("update-order", updateOrderStatus)
 	router.PUT("etab-params", EditEtabParams)
 	router.PUT("profile", EditProfile)
 	router.PUT("payment-method", EditPaymentMethod)
+	router.PUT("offers", EditOffers)
+	router.PUT("item", PutItem)
 
 	//DELETE
 	router.DELETE("reset-all-connections", deleteAllconn)
 	router.DELETE("disconnect", disconnect)
+	router.DELETE("item", DeleteItem)
 
 	// Cli part
 

@@ -138,6 +138,7 @@ type FactEtab struct {
 }
 
 type Offer struct {
+	Id       int     `db:"id"`
 	Name     string  `db:"name"`
 	PriceHT  float64 `db:"priceHT"`
 	PriceTTC float64 `db:"priceTTC"`
@@ -177,4 +178,14 @@ type Payment struct {
 	Fact_cp      int    `db:"fact_cp"`
 	Fact_city    string `db:"fact_city"`
 	Fact_country string `db:"fact_country"`
+}
+
+type Item struct {
+	Id          int     `json:"id"`
+	Name        string  `json:"name"`
+	Stock       bool    `json:"in_stock"`
+	Description string  `json:"description"`
+	Price       float64 `json:"price"`
+	PriceHH     float64 `json:"priceHH"`
+	Category    string  `json:"category"`
 }

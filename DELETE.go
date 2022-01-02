@@ -1,6 +1,8 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -48,5 +50,32 @@ func disconnect(c *gin.Context) {
 		c.JSON(401, gin.H{
 			"message": "auth required",
 		})
+	}
+}
+
+func DeleteItem(c *gin.Context) {
+	_, err := checkAuth(c)
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "not connected",
+		})
+	} else {
+		itemid, err := strconv.ParseInt(c.Request.Header.Get("item_id"), 10, 64)
+
+		if err != nil {
+			c.JSON(422, gin.H{
+				"message": "invalid entries",
+			})
+		} else {
+			err = dbDeleteItem(itemid)
+			if err != nil {
+				c.JSON(503, gin.H{
+					"message": "cannot delete item",
+				})
+			} else {
+				c.JSON(200, "Deleted")
+			}
+		}
+
 	}
 }

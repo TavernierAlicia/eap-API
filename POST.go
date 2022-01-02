@@ -230,3 +230,33 @@ func placeOrder(c *gin.Context) {
 		})
 	}
 }
+
+func PostItem(c *gin.Context) {
+	etabid, err := checkAuth(c)
+
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "not connected",
+		})
+	} else {
+		var item Item
+		c.BindJSON(&item)
+
+		if item.Name != "" && item.Description != "" {
+			err = dbInsertItem(item, etabid)
+
+			if err != nil {
+				c.JSON(503, gin.H{
+					"message": "cannot insert item",
+				})
+			} else {
+				c.JSON(200, "Inserted")
+			}
+
+		} else {
+			c.JSON(422, gin.H{
+				"message": "invalid entries",
+			})
+		}
+	}
+}

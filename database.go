@@ -575,7 +575,7 @@ func getFactEtab(etabid int64) (etab FactEtab, err error) {
 	} else {
 		// get offer
 
-		err = db.Get(&etab.Etab_offer, "SELECT offers.name, offers.priceHT, offers.priceTTC FROM offers WHERE id = ?", etab.Offer)
+		err = db.Get(&etab.Etab_offer, "SELECT id, name, priceHT, priceTTC FROM offers WHERE id = ?", etab.Offer)
 		if err != nil {
 			fmt.Println(err)
 			log.Error("cannot get etab offer", zap.String("database", viper.GetString("database.dbname")),
@@ -693,6 +693,78 @@ func dbUpdatePaymentMethod(pay Payment, etabid int64) (err error) {
 	if err != nil {
 		fmt.Println(err)
 		log.Error("cannot update payment method", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err
+}
+
+func getOffer(etabid int64) (offer Offer, err error) {
+	db := dbConnect()
+	err = db.Get(&offer, "SELECT offers.id, offers.name, offers.priceHT, offers.priceTTC FROM etabs JOIN offers ON etabs.offer = offers.id WHERE etabs.id = ?", etabid)
+
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot get offer", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return offer, err
+}
+
+func dbUpdateOffer(etabid int64, offerid int64) (err error) {
+	db := dbConnect()
+
+	var ifExists int
+	// check if offer exists before
+	err = db.Get(&ifExists, "SELECT id FROM offers WHERE id = ?", offerid)
+
+	if err == nil && ifExists != 0 {
+
+		_, err = db.Exec("UPDATE etabs SET offer = ? WHERE id = ?", offerid, etabid)
+		if err != nil {
+			fmt.Println(err)
+			log.Error("cannot update offer", zap.String("database", viper.GetString("database.dbname")),
+				zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+		}
+	}
+
+	return err
+}
+
+func dbInsertItem(item Item, etabid int64) (err error) {
+	db := dbConnect()
+
+	_, err = db.Exec("INSERT INTO items (etab_id, in_stock, name, description, price, priceHH, category) VALUES (?, ?, ?, ?, ?, ?, ?)", etabid, item.Stock, item.Name, item.Description, item.Price, item.PriceHH, item.Category)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot insert item", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err
+}
+
+func dbEditItem(item Item) (err error) {
+	db := dbConnect()
+
+	_, err = db.Exec("UPDATE items SET in_stock = ?, name = ?, description = ?, price = ?, priceHH = ?, category = ?, modified = ? WHERE id = ?", item.Stock, item.Name, item.Description, item.Price, item.PriceHH, item.Category, time.Now(), item.Id)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot update item", zap.String("database", viper.GetString("database.dbname")),
+			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
+	}
+
+	return err
+}
+
+func dbDeleteItem(itemid int64) (err error) {
+	db := dbConnect()
+
+	_, err = db.Exec("DELETE FROM items WHERE id = ?", itemid)
+	if err != nil {
+		fmt.Println(err)
+		log.Error("cannot delete item", zap.String("database", viper.GetString("database.dbname")),
 			zap.Int("attempt", 3), zap.Duration("backoff", time.Second))
 	}
 

@@ -335,3 +335,22 @@ func getPaymentMethod(c *gin.Context) {
 	}
 
 }
+
+func getEtabOffer(c *gin.Context) {
+	etabid, err := checkAuth(c)
+	if err != nil {
+		c.JSON(401, gin.H{
+			"message": "not connected",
+		})
+	} else {
+		offer, err := getOffer(etabid)
+
+		if err != nil {
+			c.JSON(404, gin.H{
+				"message": "offer not found",
+			})
+		} else {
+			c.JSON(200, offer)
+		}
+	}
+}
