@@ -18,15 +18,11 @@ func updateOrderStatus(c *gin.Context) {
 		// it's a boss or server
 		_, err := dbCheckToken(details.Token)
 		if err != nil {
-			c.JSON(401, gin.H{
-				"message": "no user for this token",
-			})
+			ret401(c)
 		} else {
 			err := dbUpdateOrderStatus(details)
 			if err != nil {
-				c.JSON(404, gin.H{
-					"message": "order update failed",
-				})
+				ret404(c)
 			} else {
 				c.JSON(200, gin.H{
 					"message": "updated",
@@ -36,9 +32,7 @@ func updateOrderStatus(c *gin.Context) {
 
 	} else {
 		// send error code
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -46,24 +40,18 @@ func editEtabParams(c *gin.Context) {
 	etabid, err := checkAuth(c)
 
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		var params EtabParams
 
 		c.BindJSON(&params)
 
 		if err != nil || params.Etab_name == "" || !regSiret(params.Siret) || !regPhone(params.Phone) {
-			c.JSON(422, gin.H{
-				"message": "invalid entries",
-			})
+			ret422(c)
 		} else {
 			err = dbUpdateEtabParams(params, etabid)
 			if err != nil {
-				c.JSON(500, gin.H{
-					"message": "cannot update params",
-				})
+				ret503(c)
 			} else {
 				getEtabParams(c)
 			}
@@ -74,9 +62,7 @@ func editEtabParams(c *gin.Context) {
 func editProfile(c *gin.Context) {
 	etabid, err := checkAuth(c)
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		var profile Profile
 		var checkProfile Profile
@@ -102,21 +88,15 @@ func editProfile(c *gin.Context) {
 			if ifExists == false {
 				err = dbUpdateProfile(profile, etabid)
 				if err != nil {
-					c.JSON(500, gin.H{
-						"message": "cannot update profile",
-					})
+					ret503(c)
 				} else {
 					getProfile(c)
 				}
 			} else {
-				c.JSON(401, gin.H{
-					"message": "mail already taken",
-				})
+				ret401(c)
 			}
 		} else {
-			c.JSON(422, gin.H{
-				"message": "invalid entries",
-			})
+			ret422(c)
 		}
 	}
 
@@ -125,9 +105,7 @@ func editProfile(c *gin.Context) {
 func editPaymentMethod(c *gin.Context) {
 	etabid, err := checkAuth(c)
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		var pay Payment
 		var checkPay Payment
@@ -138,17 +116,13 @@ func editPaymentMethod(c *gin.Context) {
 			err = dbUpdatePaymentMethod(pay, etabid)
 
 			if err != nil {
-				c.JSON(500, gin.H{
-					"message": "cannot update payment method",
-				})
+				ret503(c)
 			} else {
 				getPaymentMethod(c)
 			}
 
 		} else {
-			c.JSON(422, gin.H{
-				"message": "invalid entries",
-			})
+			ret422(c)
 		}
 	}
 }
@@ -156,22 +130,16 @@ func editPaymentMethod(c *gin.Context) {
 func editOffers(c *gin.Context) {
 	etabid, err := checkAuth(c)
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		offerid, err := strconv.ParseInt(c.Request.Header.Get("offer_id"), 10, 64)
 
 		if err != nil {
-			c.JSON(422, gin.H{
-				"message": "invalid entries",
-			})
+			ret422(c)
 		} else {
 			err = dbUpdateOffer(etabid, offerid)
 			if err != nil {
-				c.JSON(500, gin.H{
-					"message": "cannot update offer",
-				})
+				ret503(c)
 			} else {
 				getEtabOffer(c)
 			}
@@ -182,9 +150,7 @@ func editOffers(c *gin.Context) {
 func putItem(c *gin.Context) {
 	_, err := checkAuth(c)
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		var item Item
 		c.BindJSON(&item)
@@ -193,17 +159,13 @@ func putItem(c *gin.Context) {
 			err = dbEditItem(item)
 
 			if err != nil {
-				c.JSON(503, gin.H{
-					"message": "cannot update item",
-				})
+				ret503(c)
 			} else {
 				c.JSON(200, "Updated")
 			}
 
 		} else {
-			c.JSON(422, gin.H{
-				"message": "invalid entries",
-			})
+			ret422(c)
 		}
 	}
 }

@@ -54,20 +54,32 @@ func regCP(cp string) (match bool) {
 
 // codes http return
 
-func ret404(err error, c *gin.Context) {
-
+func ret404(c *gin.Context) {
+	c.JSON(404, gin.H{
+		"message": "something went wrong",
+		"error":   "Not found",
+	})
 }
 
-func ret401(err error, c *gin.Context) {
-
+func ret401(c *gin.Context) {
+	c.JSON(401, gin.H{
+		"message": "you must be connected to reach this page",
+		"error":   "Unauthorized",
+	})
 }
 
-func ret422(err error, c *gin.Context) {
-
+func ret422(c *gin.Context) {
+	c.JSON(422, gin.H{
+		"message": "cannot use this data",
+		"error":   "invalid entries",
+	})
 }
 
-func ret500(err error, c *gin.Context) {
-
+func ret503(c *gin.Context) {
+	c.JSON(503, gin.H{
+		"message": "this service encounters a problem, please retry",
+		"error":   "Unavaillable",
+	})
 }
 
 // print errors

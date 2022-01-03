@@ -10,16 +10,13 @@ func deleteAllconn(c *gin.Context) {
 	etabid, err := checkAuth(c)
 
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		err = dbResetAllConn(etabid)
 
 		if err != nil {
-			c.JSON(503, gin.H{
-				"message": "delete all conns failed",
-			})
+			ret503(c)
+
 		} else {
 			c.JSON(200, gin.H{
 				"message": "connections deleted",
@@ -38,40 +35,31 @@ func disconnect(c *gin.Context) {
 		err = dbDisconnect(auth)
 
 		if err != nil {
-			c.JSON(503, gin.H{
-				"message": "disconnect failed",
-			})
+			ret503(c)
+
 		} else {
 			c.JSON(200, gin.H{
 				"message": "disconnected",
 			})
 		}
 	} else {
-		c.JSON(401, gin.H{
-			"message": "auth required",
-		})
+		ret401(c)
 	}
 }
 
 func deleteItem(c *gin.Context) {
 	_, err := checkAuth(c)
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		itemid, err := strconv.ParseInt(c.Request.Header.Get("item_id"), 10, 64)
 
 		if err != nil {
-			c.JSON(422, gin.H{
-				"message": "invalid entries",
-			})
+			ret422(c)
 		} else {
 			err = dbDeleteItem(itemid)
 			if err != nil {
-				c.JSON(503, gin.H{
-					"message": "cannot delete item",
-				})
+				ret503(c)
 			} else {
 				c.JSON(200, "Deleted")
 			}

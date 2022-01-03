@@ -24,10 +24,11 @@ func createQR(token string, context bool) (err error) {
 	qrCode, _ = barcode.Scale(qrCode, 200, 200)
 
 	// create the output file
+	var file *os.File
 	if context {
-		file, _ := os.Create("../media/qrs/bartender/" + fmt.Sprintf("%v", token) + ".png")
+		file, _ = os.Create("../media/qrs/bartender/" + fmt.Sprintf("%v", token) + ".png")
 	} else {
-		file, _ := os.Create("../media/qrs/menu_qr/" + fmt.Sprintf("%v", token) + ".png")
+		file, _ = os.Create("../media/qrs/menu_qr/" + fmt.Sprintf("%v", token) + ".png")
 	}
 	defer file.Close()
 

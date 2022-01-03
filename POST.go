@@ -22,16 +22,12 @@ func Subscribe(c *gin.Context) {
 			temptoken, err := dbPostSub(subForm)
 			if err != nil {
 				// send error code
-				c.JSON(503, gin.H{
-					"message": "subscribtion failed",
-				})
+				ret503(c)
 			} else {
 				err = addPWD(subForm, temptoken)
 				// send error code
 				if err != nil {
-					c.JSON(503, gin.H{
-						"message": "subscribtion failed",
-					})
+					ret503(c)
 				} else {
 					// send ok code
 					c.JSON(201, gin.H{
@@ -43,9 +39,7 @@ func Subscribe(c *gin.Context) {
 
 	} else {
 		// send error code
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 
 }
@@ -61,9 +55,7 @@ func createPWD(c *gin.Context) {
 			// check security token and insert new PWD
 			err := dbInsertNewPWD(pwdForm)
 			if err != nil {
-				c.JSON(503, gin.H{
-					"message": "add pwd failed",
-				})
+				ret503(c)
 			} else {
 				// send ok code
 				c.JSON(201, gin.H{
@@ -72,15 +64,11 @@ func createPWD(c *gin.Context) {
 			}
 		} else {
 			// send error code
-			c.JSON(422, gin.H{
-				"message": "passwords mismatch",
-			})
+			ret422(c)
 		}
 	} else {
 		// send error code
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -94,9 +82,7 @@ func Connect(c *gin.Context) {
 		// check password
 		token, err := dbCliConnect(connForm)
 		if err != nil {
-			c.JSON(422, gin.H{
-				"message": "password mail mismatch",
-			})
+			ret422(c)
 		} else {
 			// send ok code
 			c.JSON(200, gin.H{
@@ -105,10 +91,7 @@ func Connect(c *gin.Context) {
 			})
 		}
 	} else {
-		// send error code
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -121,30 +104,22 @@ func SM4resetPWD(c *gin.Context) {
 		ownerInfos, err := dbGetOwnerInfos(mail, etabId)
 		if err != nil {
 			// send error code
-			c.JSON(401, gin.H{
-				"message": "owner infos not found",
-			})
+			ret401(c)
 		} else {
 			// Add security token
 			temptoken, err := dbAddSecuToken(etabId)
 			if err != nil {
-				c.JSON(503, gin.H{
-					"message": "add temptoken failed",
-				})
+				ret503(c)
 			} else {
 				// disconnect everyone
 				err = dbResetAllConn(etabId)
 
 				if err != nil {
-					c.JSON(503, gin.H{
-						"message": "reset connections failed",
-					})
+					ret503(c)
 				} else {
 					err = newPWD(ownerInfos, temptoken)
 					if err != nil {
-						c.JSON(503, gin.H{
-							"message": "send mail failed",
-						})
+						ret503(c)
 					} else {
 						c.JSON(200, gin.H{
 							"message": "ready for password reset",
@@ -155,9 +130,7 @@ func SM4resetPWD(c *gin.Context) {
 		}
 	} else {
 		// send error code
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 
 }
@@ -173,9 +146,7 @@ func QRConnect(c *gin.Context) {
 		fmt.Println(token)
 
 		if err != nil {
-			c.JSON(503, gin.H{
-				"message": "create connection failed",
-			})
+			ret503(c)
 		} else {
 			c.JSON(200, gin.H{
 				"message": "connected",
@@ -183,9 +154,7 @@ func QRConnect(c *gin.Context) {
 			})
 		}
 	} else {
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -199,25 +168,19 @@ func placeOrder(c *gin.Context) {
 		etabid, err := dbCheckCliToken(PLOrder.Token)
 
 		if err != nil {
-			c.JSON(401, gin.H{
-				"message": "no QR for this token",
-			})
+			ret401(c)
 		} else {
 			// check client_uuid
 			err := dbInsertCliSess(PLOrder.Cli_uuid)
 
 			if err != nil {
-				c.JSON(404, gin.H{
-					"message": "cli insertion failed",
-				})
+				ret404(c)
 			} else {
 				// Now insert order
 				orderid, err := dbPlaceOrder(PLOrder, etabid)
 
 				if err != nil {
-					c.JSON(404, gin.H{
-						"message": "cli insertion failed",
-					})
+					ret404(c)
 				} else {
 					c.JSON(200, orderid)
 				}
@@ -225,9 +188,7 @@ func placeOrder(c *gin.Context) {
 		}
 
 	} else {
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -235,9 +196,7 @@ func postItem(c *gin.Context) {
 	etabid, err := checkAuth(c)
 
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		var item Item
 		c.BindJSON(&item)
@@ -246,17 +205,13 @@ func postItem(c *gin.Context) {
 			err = dbInsertItem(item, etabid)
 
 			if err != nil {
-				c.JSON(503, gin.H{
-					"message": "cannot insert item",
-				})
+				ret503(c)
 			} else {
 				c.JSON(200, "Inserted")
 			}
 
 		} else {
-			c.JSON(422, gin.H{
-				"message": "invalid entries",
-			})
+			ret422(c)
 		}
 	}
 }

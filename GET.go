@@ -15,19 +15,14 @@ func getEtabs(c *gin.Context) {
 		err, etabs := dbGetEtabs(mail)
 
 		if err != nil {
-			c.JSON(404, gin.H{
-				"message": "etabs not found",
-			})
+			ret404(c)
 		} else {
 			// etabs to json
 			c.JSON(200, etabs)
 		}
 
 	} else {
-		// send error code
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -37,30 +32,22 @@ func getMenu(c *gin.Context) {
 
 	if token == "" || clientUuid == "" {
 		// send error code
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	} else {
 		etabid, err := dbCheckCliToken(token)
 
 		if err != nil {
-			c.JSON(401, gin.H{
-				"message": "no QR for this token",
-			})
+			ret401(c)
 		} else {
 			err := dbInsertCliSess(clientUuid)
 
 			if err != nil {
-				c.JSON(404, gin.H{
-					"message": "cli insertion failed",
-				})
+				ret404(c)
 			} else {
 				menu, err := dbGetEtabMenu(etabid)
 
 				if err != nil {
-					c.JSON(404, gin.H{
-						"message": "menu not found",
-					})
+					ret404(c)
 				} else {
 					c.JSON(200, menu)
 				}
@@ -80,15 +67,11 @@ func getPlanning(c *gin.Context) {
 			etabid, err := dbCheckToken(token)
 
 			if err != nil {
-				c.JSON(401, gin.H{
-					"message": "no user for this token",
-				})
+				ret401(c)
 			} else {
 				planning, err := dbGetPlanning(etabid)
 				if err != nil {
-					c.JSON(404, gin.H{
-						"message": "planning not found",
-					})
+					ret404(c)
 				} else {
 					c.JSON(200, planning)
 				}
@@ -96,17 +79,13 @@ func getPlanning(c *gin.Context) {
 		} else {
 			planning, err := dbGetPlanning(etabid)
 			if err != nil {
-				c.JSON(404, gin.H{
-					"message": "planning not found",
-				})
+				ret404(c)
 			} else {
 				c.JSON(200, planning)
 			}
 		}
 	} else {
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -117,23 +96,17 @@ func getOrders(c *gin.Context) {
 		etabid, err := dbCheckToken(token)
 
 		if err != nil {
-			c.JSON(401, gin.H{
-				"message": "no user for this token",
-			})
+			ret401(c)
 		} else {
 			orders, err := dbGetOrders(etabid)
 			if err != nil {
-				c.JSON(404, gin.H{
-					"message": "planning not found",
-				})
+				ret404(c)
 			} else {
 				c.JSON(200, orders)
 			}
 		}
 	} else {
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -147,32 +120,24 @@ func getOrder(c *gin.Context) {
 		_, err := dbCheckCliToken(token)
 
 		if err != nil {
-			c.JSON(401, gin.H{
-				"message": "no user for this token",
-			})
+			ret401(c)
 		} else {
 			// check cli_uuid
 			err := dbCheckCliSess(cli_uuid, orderid)
 
 			if err != nil {
-				c.JSON(404, gin.H{
-					"message": "no client with this id",
-				})
+				ret404(c)
 			} else {
 				order, err := dbGetOrder(orderid)
 				if err != nil {
-					c.JSON(404, gin.H{
-						"message": "order not found",
-					})
+					ret404(c)
 				} else {
 					c.JSON(200, order)
 				}
 			}
 		}
 	} else {
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -187,31 +152,23 @@ func sendFact(c *gin.Context) {
 		_, err := dbCheckCliToken(token)
 
 		if err != nil {
-			c.JSON(404, gin.H{
-				"message": "no QR with this token",
-			})
+			ret404(c)
 		} else {
 			err := dbCheckCliSess(cli_uuid, orderid)
 
 			if err != nil {
-				c.JSON(404, gin.H{
-					"message": "no client with this id",
-				})
+				ret404(c)
 			} else {
 				// get fact link
 				link, err := dbGetOrderFact(orderid)
 				if err != nil {
-					c.JSON(404, gin.H{
-						"message": "no fact found",
-					})
+					ret404(c)
 				} else {
 					// let's send this fact
 					fmt.Println("ready to send " + link)
 					err := sendCliFact(link, mail)
 					if err != nil {
-						c.JSON(500, gin.H{
-							"message": "cannot send mail",
-						})
+						ret503(c)
 					} else {
 						c.JSON(200, "mail send")
 					}
@@ -219,9 +176,7 @@ func sendFact(c *gin.Context) {
 			}
 		}
 	} else {
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -233,17 +188,13 @@ func getFactLink(c *gin.Context) {
 		// get fact link
 		link, err := dbGetOrderFact(orderid)
 		if err != nil {
-			c.JSON(404, gin.H{
-				"message": "no fact found",
-			})
+			ret404(c)
 		} else {
 
 			c.JSON(200, link)
 		}
 	} else {
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -255,9 +206,7 @@ func getBossFact(c *gin.Context) {
 		etab, err := dbGetFactEtab(etabid)
 
 		if err != nil {
-			c.JSON(404, gin.H{
-				"message": "offer not found",
-			})
+			ret404(c)
 		} else {
 
 			// TODO: generate fact
@@ -269,9 +218,7 @@ func getBossFact(c *gin.Context) {
 		}
 
 	} else {
-		c.JSON(422, gin.H{
-			"message": "invalid entries",
-		})
+		ret422(c)
 	}
 }
 
@@ -279,16 +226,12 @@ func getEtabParams(c *gin.Context) {
 	etabid, err := checkAuth(c)
 
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		params, err := dbGetEtabParams(etabid)
 
 		if err != nil {
-			c.JSON(404, gin.H{
-				"message": "params not found",
-			})
+			ret404(c)
 		} else {
 			c.JSON(200, params)
 		}
@@ -299,16 +242,12 @@ func getProfile(c *gin.Context) {
 	etabid, err := checkAuth(c)
 
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		profile, err := dbGetProfile(etabid)
 
 		if err != nil {
-			c.JSON(404, gin.H{
-				"message": "profile not found",
-			})
+			ret404(c)
 		} else {
 			c.JSON(200, profile)
 		}
@@ -319,16 +258,12 @@ func getProfile(c *gin.Context) {
 func getPaymentMethod(c *gin.Context) {
 	etabid, err := checkAuth(c)
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		pay, err := dbGetPaymentMethods(etabid)
 
 		if err != nil {
-			c.JSON(404, gin.H{
-				"message": "payment method not found",
-			})
+			ret404(c)
 		} else {
 			c.JSON(200, pay)
 		}
@@ -339,16 +274,12 @@ func getPaymentMethod(c *gin.Context) {
 func getEtabOffer(c *gin.Context) {
 	etabid, err := checkAuth(c)
 	if err != nil {
-		c.JSON(401, gin.H{
-			"message": "not connected",
-		})
+		ret401(c)
 	} else {
 		offer, err := dbGetOffer(etabid)
 
 		if err != nil {
-			c.JSON(404, gin.H{
-				"message": "offer not found",
-			})
+			ret404(c)
 		} else {
 			c.JSON(200, offer)
 		}

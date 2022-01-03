@@ -16,7 +16,7 @@ func dbConnect() *sqlx.DB {
 	//// IMPORT CONFIG ////
 	viper.SetConfigName("config")
 	viper.SetConfigType("json")
-	viper.AddConfigPath("..")
+	viper.AddConfigPath(".")
 
 	err := viper.ReadInConfig()
 
