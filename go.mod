@@ -1,4 +1,4 @@
-module eap_api
+module github.com/TavernierAlicia/eap-API
 
 go 1.17
 
