@@ -9,7 +9,7 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func AddPWD(subForm Subscription, token string) (err error) {
+func addPWD(subForm Subscription, token string) (err error) {
 	to := subForm.Mail
 	from := viper.GetString("sendmail.service_mail")
 	pass := viper.GetString("sendmail.service_pwd")
@@ -30,7 +30,7 @@ func AddPWD(subForm Subscription, token string) (err error) {
 	return err
 }
 
-func NewPWD(ownerInfos Owner, token string) (err error) {
+func newPWD(ownerInfos Owner, token string) (err error) {
 	to := ownerInfos.Mail
 	from := viper.GetString("sendmail.service_mail")
 	pass := viper.GetString("sendmail.service_pwd")

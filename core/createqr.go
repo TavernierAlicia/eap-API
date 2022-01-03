@@ -9,7 +9,7 @@ import (
 	"github.com/boombuler/barcode/qr"
 )
 
-func CreateQR(token string, context bool) (err error) {
+func createQR(token string, context bool) (err error) {
 
 	var link string
 	if context {
@@ -24,7 +24,11 @@ func CreateQR(token string, context bool) (err error) {
 	qrCode, _ = barcode.Scale(qrCode, 200, 200)
 
 	// create the output file
-	file, _ := os.Create("./qrs/menu_qr/" + fmt.Sprintf("%v", token) + ".png")
+	if context {
+		file, _ := os.Create("../media/qrs/bartender/" + fmt.Sprintf("%v", token) + ".png")
+	} else {
+		file, _ := os.Create("../media/qrs/menu_qr/" + fmt.Sprintf("%v", token) + ".png")
+	}
 	defer file.Close()
 
 	// encode the barcode as png

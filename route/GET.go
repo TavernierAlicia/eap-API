@@ -41,21 +41,21 @@ func getMenu(c *gin.Context) {
 			"message": "invalid entries",
 		})
 	} else {
-		etabid, err := checkCliToken(token)
+		etabid, err := dbCheckCliToken(token)
 
 		if err != nil {
 			c.JSON(401, gin.H{
 				"message": "no QR for this token",
 			})
 		} else {
-			err := insertCliSess(clientUuid)
+			err := dbInsertCliSess(clientUuid)
 
 			if err != nil {
 				c.JSON(404, gin.H{
 					"message": "cli insertion failed",
 				})
 			} else {
-				menu, err := getEtabMenu(etabid)
+				menu, err := dbGetEtabMenu(etabid)
 
 				if err != nil {
 					c.JSON(404, gin.H{
@@ -74,10 +74,10 @@ func getPlanning(c *gin.Context) {
 
 	if token != "" {
 		// check token && get etabid
-		etabid, err := checkCliToken(token)
+		etabid, err := dbCheckCliToken(token)
 		if err != nil {
 			// try same for boss
-			etabid, err := checkToken(token)
+			etabid, err := dbCheckToken(token)
 
 			if err != nil {
 				c.JSON(401, gin.H{
@@ -110,11 +110,11 @@ func getPlanning(c *gin.Context) {
 	}
 }
 
-func GetOrders(c *gin.Context) {
+func getOrders(c *gin.Context) {
 	token := c.Request.Header.Get("token")
 
 	if token != "" {
-		etabid, err := checkToken(token)
+		etabid, err := dbCheckToken(token)
 
 		if err != nil {
 			c.JSON(401, gin.H{
@@ -137,14 +137,14 @@ func GetOrders(c *gin.Context) {
 	}
 }
 
-func GetOrder(c *gin.Context) {
+func getOrder(c *gin.Context) {
 	token := c.Request.Header.Get("token")
 	orderid, err := strconv.ParseInt(c.Request.Header.Get("order_id"), 10, 64)
 	cli_uuid := c.Request.Header.Get("cli_uuid")
 
 	if token != "" && orderid != 0 && err == nil {
 		// check cli token
-		_, err := checkCliToken(token)
+		_, err := dbCheckCliToken(token)
 
 		if err != nil {
 			c.JSON(401, gin.H{
@@ -152,7 +152,7 @@ func GetOrder(c *gin.Context) {
 			})
 		} else {
 			// check cli_uuid
-			err := checkCliSess(cli_uuid, orderid)
+			err := dbCheckCliSess(cli_uuid, orderid)
 
 			if err != nil {
 				c.JSON(404, gin.H{
@@ -184,14 +184,14 @@ func sendFact(c *gin.Context) {
 
 	if token != "" && orderid != 0 && err == nil && mail != "" {
 		// check cli token
-		_, err := checkCliToken(token)
+		_, err := dbCheckCliToken(token)
 
 		if err != nil {
 			c.JSON(404, gin.H{
 				"message": "no QR with this token",
 			})
 		} else {
-			err := checkCliSess(cli_uuid, orderid)
+			err := dbCheckCliSess(cli_uuid, orderid)
 
 			if err != nil {
 				c.JSON(404, gin.H{
@@ -199,7 +199,7 @@ func sendFact(c *gin.Context) {
 				})
 			} else {
 				// get fact link
-				link, err := getOrderFact(orderid)
+				link, err := dbGetOrderFact(orderid)
 				if err != nil {
 					c.JSON(404, gin.H{
 						"message": "no fact found",
@@ -225,13 +225,13 @@ func sendFact(c *gin.Context) {
 	}
 }
 
-func factLink(c *gin.Context) {
+func getFactLink(c *gin.Context) {
 	orderid, err := strconv.ParseInt(c.Request.Header.Get("order_id"), 10, 64)
 
 	if orderid != 0 && err == nil {
 
 		// get fact link
-		link, err := getOrderFact(orderid)
+		link, err := dbGetOrderFact(orderid)
 		if err != nil {
 			c.JSON(404, gin.H{
 				"message": "no fact found",
@@ -247,12 +247,12 @@ func factLink(c *gin.Context) {
 	}
 }
 
-func bossFact(c *gin.Context) {
+func getBossFact(c *gin.Context) {
 	etabid, err := strconv.ParseInt(c.Request.Header.Get("etab_id"), 10, 64)
 
 	if err == nil {
 		// get etab infos
-		etab, err := getFactEtab(etabid)
+		etab, err := dbGetFactEtab(etabid)
 
 		if err != nil {
 			c.JSON(404, gin.H{
@@ -343,7 +343,7 @@ func getEtabOffer(c *gin.Context) {
 			"message": "not connected",
 		})
 	} else {
-		offer, err := getOffer(etabid)
+		offer, err := dbGetOffer(etabid)
 
 		if err != nil {
 			c.JSON(404, gin.H{

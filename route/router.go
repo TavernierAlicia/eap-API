@@ -17,11 +17,11 @@ func Router() {
 	router.GET("get-etabs4reset-pwd", getEtabs)
 	router.GET("menu", getMenu)
 	router.GET("planning", getPlanning)
-	router.GET("orders", GetOrders)
-	router.GET("order", GetOrder)
+	router.GET("orders", getOrders)
+	router.GET("order", getOrder)
 	router.GET("sendmail-fact", sendFact)
-	router.GET("fact-link", factLink)
-	router.GET("worker-fact", bossFact) // TODO: make fact
+	router.GET("fact-link", getFactLink)
+	router.GET("worker-fact", getBossFact) // TODO: make fact
 	router.GET("etab-params", getEtabParams)
 	router.GET("profile", getProfile)
 	router.GET("payment-method", getPaymentMethod)
@@ -38,20 +38,20 @@ func Router() {
 	router.POST("sendMail4reset-pwd", SM4resetPWD)
 	// place order
 	router.POST("place-order", placeOrder) // TODO: make fact
-	router.POST("item", PostItem)
+	router.POST("item", postItem)
 
 	//PUT
 	router.PUT("update-order", updateOrderStatus)
-	router.PUT("etab-params", EditEtabParams)
-	router.PUT("profile", EditProfile)
-	router.PUT("payment-method", EditPaymentMethod)
-	router.PUT("offers", EditOffers)
-	router.PUT("item", PutItem)
+	router.PUT("etab-params", editEtabParams)
+	router.PUT("profile", editProfile)
+	router.PUT("payment-method", editPaymentMethod)
+	router.PUT("offers", editOffers)
+	router.PUT("item", putItem)
 
 	//DELETE
 	router.DELETE("reset-all-connections", deleteAllconn)
 	router.DELETE("disconnect", disconnect)
-	router.DELETE("item", DeleteItem)
+	router.DELETE("item", deleteItem)
 
 	// Cli part
 

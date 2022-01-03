@@ -5,14 +5,18 @@ import (
 	"regexp"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
+var logger *zap.Logger
+
+// auth
 func checkAuth(c *gin.Context) (userid int64, err error) {
 	auth := c.Request.Header.Get("Authorization")
 	err = nil
 
 	if auth != "" {
-		userid, err = getUserId(auth)
+		userid, err = dbGetUserId(auth)
 		if userid == 0 {
 			err = errors.New("no user detected")
 		}
@@ -22,6 +26,7 @@ func checkAuth(c *gin.Context) (userid int64, err error) {
 	return userid, err
 }
 
+// regex
 func regIban(iban string) (match bool) {
 	match, _ = regexp.MatchString("^[a-zA-Z]{2}[0-9]{2}\\s?[a-zA-Z0-9]{4}\\s?[0-9]{4}\\s?[0-9]{3}([a-zA-Z0-9]\\s?[a-zA-Z0-9]{0,4}\\s?[a-zA-Z0-9]{0,4}\\s?[a-zA-Z0-9]{0,4}\\s?[a-zA-Z0-9]{0,3})?$", iban)
 	return match
@@ -45,4 +50,32 @@ func regPhone(phone string) (match bool) {
 func regCP(cp string) (match bool) {
 	match, _ = regexp.MatchString("^[0-9]{5}$", cp)
 	return match
+}
+
+// codes http return
+
+func ret404(err error, c *gin.Context) {
+
+}
+
+func ret401(err error, c *gin.Context) {
+
+}
+
+func ret422(err error, c *gin.Context) {
+
+}
+
+func ret500(err error, c *gin.Context) {
+
+}
+
+// print errors
+func printErr(desc string, nomFunc string, err error) {
+	logger, _ = zap.NewProduction()
+	defer logger.Sync()
+
+	if err != nil {
+		logger.Error("Cannot "+desc, zap.String("Func", nomFunc), zap.Error(err))
+	}
 }

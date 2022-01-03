@@ -19,14 +19,14 @@ func Subscribe(c *gin.Context) {
 	if subForm != checkForm {
 
 		if regIban(subForm.Iban) && regSiret(subForm.Siret) && regMail(subForm.Mail) && regPhone(subForm.Phone) && regCP(strconv.Itoa(subForm.Cp)) && regCP(strconv.Itoa(subForm.Fact_cp)) {
-			temptoken, err := PostDBSub(subForm)
+			temptoken, err := dbPostSub(subForm)
 			if err != nil {
 				// send error code
 				c.JSON(503, gin.H{
 					"message": "subscribtion failed",
 				})
 			} else {
-				err = AddPWD(subForm, temptoken)
+				err = addPWD(subForm, temptoken)
 				// send error code
 				if err != nil {
 					c.JSON(503, gin.H{
@@ -59,7 +59,7 @@ func createPWD(c *gin.Context) {
 	if pwdForm != checkForm && pwdForm.Token != "" && pwdForm.Password != "" && pwdForm.Confirm_password != "" {
 		if pwdForm.Password == pwdForm.Confirm_password {
 			// check security token and insert new PWD
-			err := insertNewPWD(pwdForm)
+			err := dbInsertNewPWD(pwdForm)
 			if err != nil {
 				c.JSON(503, gin.H{
 					"message": "add pwd failed",
@@ -92,7 +92,7 @@ func Connect(c *gin.Context) {
 
 	if checkForm != connForm && connForm.Mail != "" && connForm.Password != "" {
 		// check password
-		token, err := CliConnect(connForm)
+		token, err := dbCliConnect(connForm)
 		if err != nil {
 			c.JSON(422, gin.H{
 				"message": "password mail mismatch",
@@ -118,7 +118,7 @@ func SM4resetPWD(c *gin.Context) {
 
 	if mail != "" && etabId != 0 && err == nil {
 		// get owner infos for the mail
-		ownerInfos, err := getOwnerInfos(mail, etabId)
+		ownerInfos, err := dbGetOwnerInfos(mail, etabId)
 		if err != nil {
 			// send error code
 			c.JSON(401, gin.H{
@@ -126,21 +126,21 @@ func SM4resetPWD(c *gin.Context) {
 			})
 		} else {
 			// Add security token
-			temptoken, err := AddSecuToken(etabId)
+			temptoken, err := dbAddSecuToken(etabId)
 			if err != nil {
 				c.JSON(503, gin.H{
 					"message": "add temptoken failed",
 				})
 			} else {
 				// disconnect everyone
-				err = ResetAllConn(etabId)
+				err = dbResetAllConn(etabId)
 
 				if err != nil {
 					c.JSON(503, gin.H{
 						"message": "reset connections failed",
 					})
 				} else {
-					err = NewPWD(ownerInfos, temptoken)
+					err = newPWD(ownerInfos, temptoken)
 					if err != nil {
 						c.JSON(503, gin.H{
 							"message": "send mail failed",
@@ -169,7 +169,7 @@ func QRConnect(c *gin.Context) {
 	c.BindJSON(&authToken)
 
 	if authToken != checkForm {
-		token, err := checkNcreateSession(authToken.Token)
+		token, err := dbCheckNcreateSession(authToken.Token)
 		fmt.Println(token)
 
 		if err != nil {
@@ -196,7 +196,7 @@ func placeOrder(c *gin.Context) {
 
 	if PLOrder.Cli_uuid != "" && PLOrder.Token != "" && len(PLOrder.Order_items) != 0 {
 		// check token && get etabid
-		etabid, err := checkCliToken(PLOrder.Token)
+		etabid, err := dbCheckCliToken(PLOrder.Token)
 
 		if err != nil {
 			c.JSON(401, gin.H{
@@ -204,7 +204,7 @@ func placeOrder(c *gin.Context) {
 			})
 		} else {
 			// check client_uuid
-			err := insertCliSess(PLOrder.Cli_uuid)
+			err := dbInsertCliSess(PLOrder.Cli_uuid)
 
 			if err != nil {
 				c.JSON(404, gin.H{
@@ -231,7 +231,7 @@ func placeOrder(c *gin.Context) {
 	}
 }
 
-func PostItem(c *gin.Context) {
+func postItem(c *gin.Context) {
 	etabid, err := checkAuth(c)
 
 	if err != nil {

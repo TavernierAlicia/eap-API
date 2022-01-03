@@ -16,7 +16,7 @@ func updateOrderStatus(c *gin.Context) {
 
 		// check if client
 		// it's a boss or server
-		_, err := checkToken(details.Token)
+		_, err := dbCheckToken(details.Token)
 		if err != nil {
 			c.JSON(401, gin.H{
 				"message": "no user for this token",
@@ -42,7 +42,7 @@ func updateOrderStatus(c *gin.Context) {
 	}
 }
 
-func EditEtabParams(c *gin.Context) {
+func editEtabParams(c *gin.Context) {
 	etabid, err := checkAuth(c)
 
 	if err != nil {
@@ -71,7 +71,7 @@ func EditEtabParams(c *gin.Context) {
 	}
 }
 
-func EditProfile(c *gin.Context) {
+func editProfile(c *gin.Context) {
 	etabid, err := checkAuth(c)
 	if err != nil {
 		c.JSON(401, gin.H{
@@ -122,7 +122,7 @@ func EditProfile(c *gin.Context) {
 
 }
 
-func EditPaymentMethod(c *gin.Context) {
+func editPaymentMethod(c *gin.Context) {
 	etabid, err := checkAuth(c)
 	if err != nil {
 		c.JSON(401, gin.H{
@@ -153,7 +153,7 @@ func EditPaymentMethod(c *gin.Context) {
 	}
 }
 
-func EditOffers(c *gin.Context) {
+func editOffers(c *gin.Context) {
 	etabid, err := checkAuth(c)
 	if err != nil {
 		c.JSON(401, gin.H{
@@ -179,7 +179,7 @@ func EditOffers(c *gin.Context) {
 	}
 }
 
-func PutItem(c *gin.Context) {
+func putItem(c *gin.Context) {
 	_, err := checkAuth(c)
 	if err != nil {
 		c.JSON(401, gin.H{

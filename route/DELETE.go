@@ -14,7 +14,7 @@ func deleteAllconn(c *gin.Context) {
 			"message": "not connected",
 		})
 	} else {
-		err = ResetAllConn(etabid)
+		err = dbResetAllConn(etabid)
 
 		if err != nil {
 			c.JSON(503, gin.H{
@@ -53,7 +53,7 @@ func disconnect(c *gin.Context) {
 	}
 }
 
-func DeleteItem(c *gin.Context) {
+func deleteItem(c *gin.Context) {
 	_, err := checkAuth(c)
 	if err != nil {
 		c.JSON(401, gin.H{
