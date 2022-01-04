@@ -10,10 +10,7 @@ func Router() {
 	router := gin.Default()
 	router.Use(limit.MaxAllowed(20))
 
-	// Bar part
-
 	//GET
-	// orders
 	router.GET("get-etabs4reset-pwd", getEtabs)
 	router.GET("menu", getMenu)
 	router.GET("planning", getPlanning)
@@ -26,6 +23,7 @@ func Router() {
 	router.GET("profile", getProfile)
 	router.GET("payment-method", getPaymentMethod)
 	router.GET("offers", getEtabOffer)
+	router.GET("csv", getCSV)
 
 	//POST
 	// subscribe
@@ -52,8 +50,6 @@ func Router() {
 	router.DELETE("reset-all-connections", deleteAllconn)
 	router.DELETE("disconnect", disconnect)
 	router.DELETE("item", deleteItem)
-
-	// Cli part
 
 	// Run
 	router.Run(":9999")

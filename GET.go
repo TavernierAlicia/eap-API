@@ -285,3 +285,30 @@ func getEtabOffer(c *gin.Context) {
 		}
 	}
 }
+
+func getCSV(c *gin.Context) {
+	etabid, err := checkAuth(c)
+
+	fmt.Println(err)
+
+	start := c.Request.Header.Get("start")
+	end := c.Request.Header.Get("end")
+
+	if err != nil || start == "" || end == "" {
+		ret401(c)
+	} else {
+		content, err := dbGetCSV(start, end, etabid)
+
+		if err != nil {
+			ret404(c)
+		} else {
+			filepath, err := toCSV(content, etabid, start, end)
+
+			if err != nil {
+				ret404(c)
+			} else {
+				c.JSON(200, filepath)
+			}
+		}
+	}
+}

@@ -189,3 +189,12 @@ type Item struct {
 	PriceHH     float64 `json:"priceHH"`
 	Category    string  `json:"category"`
 }
+
+type RenderCSV struct {
+	Id         int     `db:"id"`
+	Name       string  `db:"name"`
+	Quantity   int     `db:"quantity"`
+	Price      float64 `db:"price"`
+	Order_id   int     `db:"order_id"`
+	Order_date string  `db:"created"`
+}

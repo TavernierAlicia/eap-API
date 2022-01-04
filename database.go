@@ -557,3 +557,13 @@ func dbDeleteItem(itemid int64) (err error) {
 
 	return err
 }
+
+func dbGetCSV(start string, end string, etabid int64) (result []*RenderCSV, err error) {
+	db := dbConnect()
+
+	err = db.Select(&result, "SELECT order_items.id, order_items.order_id, order_items.quantity, order_items.created, order_items.price, items.name FROM `order_items` JOIN items ON items.id = order_items.item_id WHERE items.etab_id = ? and order_items.created BETWEEN ? and ?", etabid, start, end)
+	printErr("getting csv content", "dbGetCSV", err)
+
+	return result, err
+
+}
