@@ -58,7 +58,44 @@ func sendCliFact(link string, mail string) (err error) {
 
 	subject := "Votre commande du " + time.Now().Format("02-01-2006 15:04:05")
 
-	message := "Bonjour, Vous trouverez votre facture au format pdf ci-jointe, à bientôt sur Easy As Pie! "
+	message := `
+	<h1>Bonjour, Vous trouverez votre facture au format pdf ci-jointe, à bientôt sur Easy As Pie! </h1> 
+
+	<h2>Facture n°?</h2>
+	
+	</br>
+	<table style='border: 1px solid black; margin-right:10px;'>
+			<tr>
+				<th><b>Quantité</b></th>
+				<th><b>Produit</b></th>
+				<th><b>Prix Unitaire €</b></th>
+				<th><b>Montant € </b></th>
+			</tr>
+		</thead>
+		<tbody>
+			<tr>
+				<td style='border:none'>2</td>
+				<td>Jus d'orange</td>
+				<td style='border:none'>10.00</td>
+				<td style='border:none'>20.00</td>
+			</tr>
+		</tbody>
+		<tr>
+			<th></br></br>TOTAL EUROS </b></th>
+			<th></br></br></b></th>
+			<th></br></br></b></th>
+			<th></br></br>20.00</b></th>
+		</tr>
+		<tr>
+			<th>TVA 20%</th>
+			<th></br></br></b></th>
+			<th></br></br></b></th>
+			<th>4.00</th>
+		</tr>
+	
+	</table>
+	
+	<p>Nous vous souhaitons une agréable journée!</p>`
 
 	m := gomail.NewMessage()
 	m.SetHeader("From", from)

@@ -370,7 +370,7 @@ func dbGetOrders(etabid int) (orders []*ReturnOrders, err error) {
 	err = db.Select(&orders, "SELECT id, cli_uuid, totalTTC, totalHT, confirmed, ready, done, created FROM orders WHERE etab_id = ?", etabid)
 	printErr("get rows", "dbGetOrders", err)
 
-	for i, _ := range orders {
+	for i := range orders {
 
 		err = db.Select(&orders[i].Order_items, "SELECT order_items.quantity, order_items.price, items.category, items.name FROM order_items JOIN items ON order_items.item_id = items.id WHERE order_id = ?", orders[0].Id)
 		printErr("get rows", "dbGetOrders", err)

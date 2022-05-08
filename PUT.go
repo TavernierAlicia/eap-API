@@ -85,7 +85,7 @@ func editProfile(c *gin.Context) {
 				ifExists = false
 			}
 
-			if ifExists == false {
+			if !ifExists {
 				err = dbUpdateProfile(profile, etabid)
 				if err != nil {
 					ret503(c)
