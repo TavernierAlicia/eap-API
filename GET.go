@@ -6,6 +6,7 @@ import (
 	"time"
 
 	eapFact "github.com/TavernierAlicia/eap-FACT"
+	eapMail "github.com/TavernierAlicia/eap-MAIL"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
@@ -168,7 +169,7 @@ func sendFact(c *gin.Context) {
 				} else {
 					// let's send this fact
 					fmt.Println("ready to send " + link)
-					err := sendCliFact(link, mail)
+					err := eapMail.SendCliFact(link, mail)
 					if err != nil {
 						ret503(c)
 					} else {
@@ -226,7 +227,7 @@ func getBossFact(c *gin.Context) {
 					ret503(c)
 				}
 				// send fact
-				err = sendBossFact(etab)
+				err = eapMail.SendBossFact(etab)
 				if err != nil {
 					ret503(c)
 				} else {

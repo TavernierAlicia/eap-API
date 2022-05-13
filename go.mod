@@ -4,6 +4,7 @@ go 1.17
 
 require (
 	github.com/TavernierAlicia/eap-FACT v0.0.0-20220513123934-7797e4bb8dec
+	github.com/TavernierAlicia/eap-MAIL v0.0.0-20220513132030-92d4d9258e59
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
 	github.com/boombuler/barcode v1.0.1
 	github.com/gin-gonic/gin v1.7.7
@@ -50,5 +51,5 @@ require (
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b // indirect
+	gopkg.in/yaml.v3 v3.0.0-20220512140231-539c8e751b99 // indirect
 )

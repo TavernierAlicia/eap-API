@@ -6,6 +6,7 @@ import (
 	"time"
 
 	eapFact "github.com/TavernierAlicia/eap-FACT"
+	eapMail "github.com/TavernierAlicia/eap-MAIL"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -31,7 +32,7 @@ func dbConnect() *sqlx.DB {
 	return db
 }
 
-func dbPostSub(subForm Subscription) (temptoken string, err error) {
+func dbPostSub(subForm eapMail.Subscription) (temptoken string, err error) {
 	db := dbConnect()
 
 	// Verify if user already exists
@@ -168,7 +169,7 @@ func dbGetEtabs(mail string) (etabs []*Etab, err error) {
 	return etabs, err
 }
 
-func dbGetOwnerInfos(mail string, etabId int64) (ownerInfos Owner, err error) {
+func dbGetOwnerInfos(mail string, etabId int64) (ownerInfos eapMail.Owner, err error) {
 	db := dbConnect()
 
 	err = db.Get(&ownerInfos, "SELECT owner_civility, owner_name, owner_surname, mail, name, siret, addr, cp, city, country FROM etabs WHERE id = ?", etabId)

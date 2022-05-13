@@ -4,14 +4,15 @@ import (
 	"fmt"
 	"strconv"
 
+	eapMail "github.com/TavernierAlicia/eap-MAIL"
 	"github.com/gin-gonic/gin"
 )
 
 func Subscribe(c *gin.Context) {
 
 	// recept data
-	var subForm Subscription
-	var checkForm Subscription
+	var subForm eapMail.Subscription
+	var checkForm eapMail.Subscription
 	c.BindJSON(&subForm)
 
 	// check data if not nil
@@ -24,7 +25,7 @@ func Subscribe(c *gin.Context) {
 				// send error code
 				ret503(c)
 			} else {
-				err = addPWD(subForm, temptoken)
+				err = eapMail.AddPWD(subForm, temptoken)
 				// send error code
 				if err != nil {
 					ret503(c)
@@ -117,7 +118,7 @@ func SM4resetPWD(c *gin.Context) {
 				if err != nil {
 					ret503(c)
 				} else {
-					err = newPWD(ownerInfos, temptoken)
+					err = eapMail.NewPWD(ownerInfos, temptoken)
 					if err != nil {
 						ret503(c)
 					} else {
