@@ -5,7 +5,9 @@ import (
 	"strconv"
 	"time"
 
+	eapFact "github.com/TavernierAlicia/eap-FACT"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 )
 
 func getEtabs(c *gin.Context) {
@@ -209,14 +211,29 @@ func getBossFact(c *gin.Context) {
 			ret404(c)
 		} else {
 
-			// TODO: generate fact
-			etab.Fact_infos.Link = "../tests/zpl.pdf"
+			etab.Fact_infos.Uuid = uuid.New().String()
+			etab.Fact_infos.IsFirst = true
 			etab.Fact_infos.Date = time.Now().Format("02-01-2006")
+			etab.Fact_infos.Link = "./media/factures/" + etab.Fact_infos.Uuid + "_" + etab.Fact_infos.Date + ".pdf"
+			err, etab.Fact_infos.Id = dbCreateBossFirstFact(etabid, etab.Fact_infos.Uuid, etab.Fact_infos.Link)
 
-			// send fact
-			sendBossFact(etab)
+			if err != nil {
+				ret503(c)
+			} else {
+				// create fact
+				err = eapFact.CreateFact(etab)
+				if err != nil {
+					ret503(c)
+				}
+				// send fact
+				err = sendBossFact(etab)
+				if err != nil {
+					ret503(c)
+				} else {
+					c.JSON(200, etab)
+				}
+			}
 		}
-
 	} else {
 		ret422(c)
 	}

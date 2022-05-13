@@ -5,6 +5,7 @@ import (
 	"net/smtp"
 	"time"
 
+	eapFact "github.com/TavernierAlicia/eap-FACT"
 	"github.com/spf13/viper"
 	"gopkg.in/gomail.v2"
 )
@@ -115,7 +116,7 @@ func sendCliFact(link string, mail string) (err error) {
 	return err
 }
 
-func sendBossFact(etab FactEtab) (err error) {
+func sendBossFact(etab eapFact.FactEtab) (err error) {
 	to := etab.Mail
 	from := viper.GetString("sendmail.service_mail")
 	pass := viper.GetString("sendmail.service_pwd")
@@ -134,7 +135,6 @@ func sendBossFact(etab FactEtab) (err error) {
 
 	d := gomail.NewPlainDialer("smtp.gmail.com", 587, from, pass)
 
-	// Send the email to Bob, Cora and Dan.
 	if err := d.DialAndSend(m); err != nil {
 		panic(err)
 	}

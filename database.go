@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	eapFact "github.com/TavernierAlicia/eap-FACT"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -411,7 +412,7 @@ func dbGetOrderFact(orderid int64) (link string, err error) {
 
 }
 
-func dbGetFactEtab(etabid int64) (etab FactEtab, err error) {
+func dbGetFactEtab(etabid int64) (etab eapFact.FactEtab, err error) {
 
 	db := dbConnect()
 	err = db.Get(&etab, "SELECT name, owner_civility, owner_name, owner_surname, mail, phone, fact_addr, fact_cp, fact_city, fact_country, offer FROM etabs WHERE etabs.id = ?", etabid)
@@ -425,6 +426,17 @@ func dbGetFactEtab(etabid int64) (etab FactEtab, err error) {
 	}
 
 	return etab, err
+}
+
+func dbCreateBossFirstFact(etabid int64, uuid string, link string) (err error, factId int64) {
+	db := dbConnect()
+	insertFact, err := db.Exec("INSERT INTO factures (uuid, etab_id, link, created, payed) VALUES (?, ?, ?, NOW(), NOW())", uuid, etabid, link)
+	factId, err = insertFact.LastInsertId()
+	if err != nil {
+		printErr("insert first fact", "dbCreateBossFirstFact", err)
+	}
+
+	return err, factId
 }
 
 func dbGetEtabParams(etabid int64) (params EtabParams, err error) {
@@ -506,7 +518,7 @@ func dbUpdatePaymentMethod(pay Payment, etabid int64) (err error) {
 	return err
 }
 
-func dbGetOffer(etabid int64) (offer Offer, err error) {
+func dbGetOffer(etabid int64) (offer eapFact.Offer, err error) {
 	db := dbConnect()
 	err = db.Get(&offer, "SELECT offers.id, offers.name, offers.priceHT, offers.priceTTC FROM etabs JOIN offers ON etabs.offer = offers.id WHERE etabs.id = ?", etabid)
 
