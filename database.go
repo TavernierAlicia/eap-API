@@ -80,7 +80,7 @@ func dbPostSub(subForm eapMail.Subscription) (temptoken string, err error) {
 					err = createQR(clientToken, false)
 					printErr("create qr cli", "dbPostSub", err)
 				}
-				_, err = db.Exec("INSERT INTO items (etab_id, category) VALUES (?, ?) ", etabId, "Cocktails")
+				_, err = db.Exec("INSERT INTO items (etab_id, category, created) VALUES (?, ?, NOW()) ", etabId, "Cocktails")
 				printErr("insert item", "dbPostSub", err)
 			}
 		} else {
