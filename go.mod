@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/TavernierAlicia/eap-FACT v0.0.0-20220513123934-7797e4bb8dec
-	github.com/TavernierAlicia/eap-MAIL v0.0.0-20220515134230-6d0686f1b827
+	github.com/TavernierAlicia/eap-MAIL v0.0.0-20220515160218-1fb51047c51e
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
 	github.com/boombuler/barcode v1.0.1
 	github.com/gin-gonic/gin v1.7.7
