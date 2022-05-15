@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -12,10 +11,11 @@ import (
 )
 
 func getEtabs(c *gin.Context) {
-	mail := c.Request.Header.Get("mail")
+
+	mail := c.Query("mail")
 
 	if mail != "" {
-		err, etabs := dbGetEtabs(mail)
+		etabs, err := dbGetEtabs(mail)
 
 		if err != nil {
 			ret404(c)
@@ -31,7 +31,7 @@ func getEtabs(c *gin.Context) {
 
 func getMenu(c *gin.Context) {
 	token := c.Request.Header.Get("token")
-	clientUuid := c.Request.Header.Get("client-uuid")
+	clientUuid := c.Query("cli_uuid")
 
 	if token == "" || clientUuid == "" {
 		// send error code
@@ -115,8 +115,8 @@ func getOrders(c *gin.Context) {
 
 func getOrder(c *gin.Context) {
 	token := c.Request.Header.Get("token")
-	orderid, err := strconv.ParseInt(c.Request.Header.Get("order_id"), 10, 64)
-	cli_uuid := c.Request.Header.Get("cli_uuid")
+	cli_uuid := c.Query("cli_uuid")
+	orderid, err := strconv.ParseInt(c.Query("order_id"), 10, 64)
 
 	if token != "" && orderid != 0 && err == nil {
 		// check cli token
@@ -146,9 +146,9 @@ func getOrder(c *gin.Context) {
 
 func sendFact(c *gin.Context) {
 	token := c.Request.Header.Get("token")
-	orderid, err := strconv.ParseInt(c.Request.Header.Get("order_id"), 10, 64)
-	cli_uuid := c.Request.Header.Get("cli_uuid")
-	mail := c.Request.Header.Get("mail")
+	cli_uuid := c.Query("cli_uuid")
+	orderid, err := strconv.ParseInt(c.Query("order_id"), 10, 64)
+	mail := c.Query("mail")
 
 	if token != "" && orderid != 0 && err == nil && mail != "" {
 		// check cli token
@@ -168,7 +168,6 @@ func sendFact(c *gin.Context) {
 					ret404(c)
 				} else {
 					// let's send this fact
-					fmt.Println("ready to send " + link)
 					err := eapMail.SendCliFact(link, mail)
 					if err != nil {
 						ret503(c)
@@ -184,7 +183,7 @@ func sendFact(c *gin.Context) {
 }
 
 func getFactLink(c *gin.Context) {
-	orderid, err := strconv.ParseInt(c.Request.Header.Get("order_id"), 10, 64)
+	orderid, err := strconv.ParseInt(c.Query("order_id"), 10, 64)
 
 	if orderid != 0 && err == nil {
 
@@ -202,7 +201,7 @@ func getFactLink(c *gin.Context) {
 }
 
 func getBossFact(c *gin.Context) {
-	etabid, err := strconv.ParseInt(c.Request.Header.Get("etab_id"), 10, 64)
+	etabid, err := strconv.ParseInt(c.Query("etab_id"), 10, 64)
 
 	if err == nil {
 		// get etab infos
@@ -307,10 +306,8 @@ func getEtabOffer(c *gin.Context) {
 func getCSV(c *gin.Context) {
 	etabid, err := checkAuth(c)
 
-	fmt.Println(err)
-
-	start := c.Request.Header.Get("start")
-	end := c.Request.Header.Get("end")
+	start := c.Query("start")
+	end := c.Query("end")
 
 	if err != nil || start == "" || end == "" {
 		ret401(c)

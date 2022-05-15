@@ -1,39 +1,11 @@
 package main
 
-// type Subscription struct {
-// 	Civility     string `json:"civility"`
-// 	Name         string `json:"name"`
-// 	Surname      string `json:"surname"`
-// 	Mail         string `json:"mail"`
-// 	Phone        string `json:"phone"`
-// 	Offer        int    `json:"offer"`
-// 	Entname      string `json:"entname"`
-// 	Siret        string `json:"siret"`
-// 	Licence      string `json:"licence"`
-// 	Addr         string `json:"addr"`
-// 	Cp           int    `json:"cp"`
-// 	City         string `json:"city"`
-// 	Country      string `json:"country"`
-// 	Iban         string `json:"iban"`
-// 	Name_iban    string `json:"name_iban"`
-// 	Fact_addr    string `json:"fact_addr"`
-// 	Fact_cp      int    `json:"fact_cp"`
-// 	Fact_city    string `json:"fact_city"`
-// 	Fact_country string `json:"fact_country"`
-// }
-
-// type Owner struct {
-// 	Civility string `db:"owner_civility"`
-// 	Name     string `db:"owner_name"`
-// 	Surname  string `db:"owner_surname"`
-// 	Mail     string `db:"mail"`
-// 	Entname  string `db:"name"`
-// 	Siret    string `db:"siret"`
-// 	Addr     string `db:"addr"`
-// 	Cp       int    `db:"cp"`
-// 	City     string `db:"city"`
-// 	Country  string `db:"country"`
-// }
+type JSONTODATA struct {
+	Mail    string `json:"mail"`
+	EtabID  int64  `json:"etab_id"`
+	OfferID int64  `json:"offer_id"`
+	ItemID  int64  `json:"item_id"`
+}
 
 type PWD struct {
 	Token            string `json:"token"`
@@ -120,34 +92,6 @@ type Items struct {
 	Price    float64 `db:"price"`
 	Category string  `db:"category"`
 }
-
-// type FactEtab struct {
-// 	Owner_civility string `db:"owner_civility"`
-// 	Owner_name     string `db:"owner_name"`
-// 	Owner_surname  string `db:"owner_surname"`
-// 	Mail           string `db:"mail"`
-// 	Phone          string `db:"phone"`
-// 	Name           string `db:"name"`
-// 	Fact_addr      string `db:"fact_addr"`
-// 	Fact_cp        int    `db:"fact_cp"`
-// 	Fact_city      string `db:"fact_city"`
-// 	Fact_country   string `db:"fact_country"`
-// 	Offer          int    `db:"offer"`
-// 	Fact_infos     FactInfos
-// 	Etab_offer     Offer
-// }
-
-// type Offer struct {
-// 	Id       int     `db:"id"`
-// 	Name     string  `db:"name"`
-// 	PriceHT  float64 `db:"priceHT"`
-// 	PriceTTC float64 `db:"priceTTC"`
-// }
-
-// type FactInfos struct {
-// 	Link string `db:"link"`
-// 	Date string `db:"created"`
-// }
 
 type EtabParams struct {
 	Etab_name string `db:"name"`

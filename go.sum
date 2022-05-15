@@ -58,10 +58,10 @@ github.com/DataDog/datadog-go v3.2.0+incompatible/go.mod h1:LButxg5PwREeZtORoXG3
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/TavernierAlicia/eap-FACT v0.0.0-20220513123934-7797e4bb8dec h1:EMSXxNXgwgw3wfnI12skA/p2rWF26YF7ayRy7wgbag0=
 github.com/TavernierAlicia/eap-FACT v0.0.0-20220513123934-7797e4bb8dec/go.mod h1:xorMqDbevCvzlFs0BkEYfCD0NizL1FV0lzFiV41tUjI=
-github.com/TavernierAlicia/eap-MAIL v0.0.0-20220513125029-85dd4b1f3f33 h1:Tn/Us5BST/cyMYpF2SCt7BMvcokcnDNk0vgnoqoXSU0=
-github.com/TavernierAlicia/eap-MAIL v0.0.0-20220513125029-85dd4b1f3f33/go.mod h1:83tx3rFnPj+nKCIL5SGZpQ9oeo0srKnzteIS1cA0XDI=
 github.com/TavernierAlicia/eap-MAIL v0.0.0-20220513132030-92d4d9258e59 h1:WKTs0CNKYfzEm/n1C9i1dL7o3/KMOO8jAWT+dBG8kYI=
 github.com/TavernierAlicia/eap-MAIL v0.0.0-20220513132030-92d4d9258e59/go.mod h1:9mvBylfpkbog4QpS1Ocwv6gRMZ9hILeB5oT00wsL+bs=
+github.com/TavernierAlicia/eap-MAIL v0.0.0-20220515134230-6d0686f1b827 h1:WLbTnNDJapi7XBVbstMP4Zr1HpDnLrNbyAxyRVMMmuw=
+github.com/TavernierAlicia/eap-MAIL v0.0.0-20220515134230-6d0686f1b827/go.mod h1:9mvBylfpkbog4QpS1Ocwv6gRMZ9hILeB5oT00wsL+bs=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
 github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf/go.mod h1:ybxpYRFXyAe+OPACYpWeL0wqObRcbAqCMya13uyzqw0=
@@ -638,6 +638,8 @@ golang.org/x/sys v0.0.0-20220328115105-d36c6a25d886/go.mod h1:oPkhp1MJrh7nUepCBc
 golang.org/x/sys v0.0.0-20220412211240-33da011f77ad/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6 h1:nonptSpoQ4vQjyraW20DXPAglgQfVnM9ZC6MmNLMR60=
 golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
+golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a h1:N2T1jUrTQE9Re6TFF5PhvEHXHCguynGhKjWVsIUt5cY=
+golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1/go.mod h1:bj7SfCRtBDWHUb9snDiAeCFNEtKQo2Wmx5Cou7ajbmo=
 golang.org/x/term v0.0.0-20210927222741-03fcf44c2211/go.mod h1:jbD1KX2456YbFQfuXm/mYQcufACuNUgVhRMnK/tPxf8=
 golang.org/x/text v0.0.0-20170915032832-14c0d48ead0c/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=

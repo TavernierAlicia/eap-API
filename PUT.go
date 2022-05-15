@@ -132,18 +132,18 @@ func editOffers(c *gin.Context) {
 	if err != nil {
 		ret401(c)
 	} else {
-		offerid, err := strconv.ParseInt(c.Request.Header.Get("offer_id"), 10, 64)
+		var randomData JSONTODATA
+		c.BindJSON(&randomData)
 
+		offerid := randomData.OfferID
+
+		err = dbUpdateOffer(etabid, offerid)
 		if err != nil {
-			ret422(c)
+			ret503(c)
 		} else {
-			err = dbUpdateOffer(etabid, offerid)
-			if err != nil {
-				ret503(c)
-			} else {
-				getEtabOffer(c)
-			}
+			getEtabOffer(c)
 		}
+
 	}
 }
 

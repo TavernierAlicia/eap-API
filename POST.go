@@ -97,10 +97,13 @@ func Connect(c *gin.Context) {
 }
 
 func SM4resetPWD(c *gin.Context) {
-	mail := c.Request.Header.Get("mail")
-	etabId, err := strconv.ParseInt(c.Request.Header.Get("etabid"), 10, 64)
+	var randomData JSONTODATA
+	c.BindJSON(&randomData)
 
-	if mail != "" && etabId != 0 && err == nil {
+	mail := randomData.Mail
+	etabId := randomData.EtabID
+
+	if mail != "" && etabId != 0 {
 		// get owner infos for the mail
 		ownerInfos, err := dbGetOwnerInfos(mail, etabId)
 		if err != nil {

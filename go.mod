@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/TavernierAlicia/eap-FACT v0.0.0-20220513123934-7797e4bb8dec
-	github.com/TavernierAlicia/eap-MAIL v0.0.0-20220513132030-92d4d9258e59
+	github.com/TavernierAlicia/eap-MAIL v0.0.0-20220515134230-6d0686f1b827
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
 	github.com/boombuler/barcode v1.0.1
 	github.com/gin-gonic/gin v1.7.7
@@ -13,7 +13,6 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/spf13/viper v1.11.0
 	go.uber.org/zap v1.21.0
-	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 )
 
 require (
@@ -45,10 +44,11 @@ require (
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.8.0 // indirect
 	golang.org/x/crypto v0.0.0-20220511200225-c6db032c6c88 // indirect
-	golang.org/x/sys v0.0.0-20220503163025-988cb79eb6c6 // indirect
+	golang.org/x/sys v0.0.0-20220513210249-45d2b4557a2a // indirect
 	golang.org/x/text v0.3.7 // indirect
 	google.golang.org/protobuf v1.28.0 // indirect
 	gopkg.in/alexcesaro/quotedprintable.v3 v3.0.0-20150716171945-2caba252f4dc // indirect
+	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.0-20220512140231-539c8e751b99 // indirect

@@ -1,8 +1,6 @@
 package main
 
 import (
-	"strconv"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -52,17 +50,17 @@ func deleteItem(c *gin.Context) {
 	if err != nil {
 		ret401(c)
 	} else {
-		itemid, err := strconv.ParseInt(c.Request.Header.Get("item_id"), 10, 64)
 
+		var randomData JSONTODATA
+		c.BindJSON(&randomData)
+
+		itemid := randomData.ItemID
+
+		err = dbDeleteItem(itemid)
 		if err != nil {
-			ret422(c)
+			ret503(c)
 		} else {
-			err = dbDeleteItem(itemid)
-			if err != nil {
-				ret503(c)
-			} else {
-				c.JSON(200, "Deleted")
-			}
+			c.JSON(200, "Deleted")
 		}
 
 	}
