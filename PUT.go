@@ -3,6 +3,7 @@ package main
 import (
 	"strconv"
 
+	eapMail "github.com/TavernierAlicia/eap-MAIL"
 	"github.com/gin-gonic/gin"
 )
 
@@ -93,7 +94,7 @@ func editProfile(c *gin.Context) {
 					getProfile(c)
 				}
 			} else {
-				ret401(c)
+				ret404(c)
 			}
 		} else {
 			ret422(c)
@@ -137,13 +138,16 @@ func editOffers(c *gin.Context) {
 
 		offerid := randomData.OfferID
 
-		err = dbUpdateOffer(etabid, offerid)
-		if err != nil {
-			ret503(c)
+		if randomData.OfferID != 0 {
+			err = dbUpdateOffer(etabid, offerid)
+			if err != nil {
+				ret503(c)
+			} else {
+				getEtabOffer(c)
+			}
 		} else {
-			getEtabOffer(c)
+			ret422(c)
 		}
-
 	}
 }
 
@@ -163,9 +167,57 @@ func putItem(c *gin.Context) {
 			} else {
 				c.JSON(200, "Updated")
 			}
-
 		} else {
 			ret422(c)
+		}
+	}
+}
+
+func putCategory(c *gin.Context) {
+	etabid, err := checkAuth(c)
+
+	if err != nil {
+		ret401(c)
+	} else {
+		var empty JSONTODATA
+		var category JSONTODATA
+		c.BindJSON(&category)
+
+		if category.Category_name != "" && category.Category_id != 0 && category != empty {
+			err = dbEditCategory(etabid, category.Category_name, category.Category_id)
+			if err != nil {
+				ret503(c)
+			} else {
+				c.JSON(200, gin.H{
+					"message": "category updated",
+				})
+			}
+		} else {
+			ret422(c)
+		}
+	}
+}
+
+func unsub(c *gin.Context) {
+	etabid, err := checkAuth(c)
+
+	if err != nil {
+		ret401(c)
+	} else {
+		etab, echeance, err := dbUnsub(etabid)
+
+		if err != nil {
+			ret503(c)
+		} else {
+			err = eapMail.AskDeleteAccount(etab, echeance)
+
+			if err != nil {
+				ret503(c)
+			} else {
+				c.JSON(200, gin.H{
+					"message": "unsubscription confirmed",
+				})
+			}
 		}
 	}
 }

@@ -1,13 +1,8 @@
 package main
 
 import (
-	"encoding/csv"
 	"errors"
-	"fmt"
-	"os"
 	"regexp"
-	"strconv"
-	"strings"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -66,6 +61,13 @@ func ret404(c *gin.Context) {
 	})
 }
 
+func ret403(c *gin.Context) {
+	c.JSON(403, gin.H{
+		"message": "suspended account",
+		"error":   "Refused",
+	})
+}
+
 func ret401(c *gin.Context) {
 	c.JSON(401, gin.H{
 		"message": "you must be connected to reach this page",
@@ -95,34 +97,4 @@ func printErr(desc string, nomFunc string, err error) {
 	if err != nil {
 		logger.Error("Cannot "+desc, zap.String("Func", nomFunc), zap.Error(err))
 	}
-}
-
-func toCSV(content []*RenderCSV, etabid int64, start string, end string) (filepath string, err error) {
-
-	var rows [][]string
-
-	filepath = "media/csvs/" + strconv.FormatInt(etabid, 10) + "_" + strings.ReplaceAll(start, " ", "-") + "_to_" + strings.ReplaceAll(end, " ", "-") + "-export.csv"
-
-	file, err := os.Create(filepath)
-
-	if err != nil {
-		printErr("create csv file", "toCSV", err)
-	}
-
-	writer := csv.NewWriter(file)
-
-	for _, row := range content {
-
-		fmt.Println(row.Id, row.Name, row.Quantity, row.Price, row.Order_id, row.Order_date)
-		rows = append(rows, []string{strconv.Itoa(row.Id), row.Name, strconv.Itoa(row.Quantity), fmt.Sprintf("%.2f", row.Price), strconv.Itoa(row.Order_id), row.Order_date})
-
-	}
-
-	err = writer.WriteAll(rows)
-	if err != nil {
-		printErr("write csv rows", "toCSV", err)
-	}
-
-	return filepath, err
-
 }

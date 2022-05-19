@@ -65,3 +65,28 @@ func deleteItem(c *gin.Context) {
 
 	}
 }
+
+func deleteCategory(c *gin.Context) {
+	etabid, err := checkAuth(c)
+
+	if err != nil {
+		ret401(c)
+	} else {
+		var empty JSONTODATA
+		var category JSONTODATA
+		c.BindJSON(&category)
+
+		if category.Category_id != 0 || category != empty {
+			err = dbDeleteCategory(etabid, category.Category_id)
+			if err != nil {
+				ret503(c)
+			} else {
+				c.JSON(200, gin.H{
+					"message": "category deleted",
+				})
+			}
+		} else {
+			ret422(c)
+		}
+	}
+}

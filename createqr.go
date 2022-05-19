@@ -7,6 +7,7 @@ import (
 
 	"github.com/boombuler/barcode"
 	"github.com/boombuler/barcode/qr"
+	"github.com/spf13/viper"
 )
 
 func createQR(token string, context bool) (err error) {
@@ -26,9 +27,10 @@ func createQR(token string, context bool) (err error) {
 	// create the output file
 	var file *os.File
 	if context {
-		file, _ = os.Create("../media/qrs/bartender/" + fmt.Sprintf("%v", token) + ".png")
+
+		file, _ = os.Create(viper.GetString("links.cdn_qr") + "bartender/" + fmt.Sprintf("%v", token) + ".png")
 	} else {
-		file, _ = os.Create("../media/qrs/menu_qr/" + fmt.Sprintf("%v", token) + ".png")
+		file, _ = os.Create(viper.GetString("links.cdn_qr") + "menu_qr/" + fmt.Sprintf("%v", token) + ".png")
 	}
 	defer file.Close()
 

@@ -4,10 +4,12 @@ import (
 	"strconv"
 	"time"
 
+	eapCSV "github.com/TavernierAlicia/eap-CSV"
 	eapFact "github.com/TavernierAlicia/eap-FACT"
 	eapMail "github.com/TavernierAlicia/eap-MAIL"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/spf13/viper"
 )
 
 func getEtabs(c *gin.Context) {
@@ -214,7 +216,7 @@ func getBossFact(c *gin.Context) {
 			etab.Fact_infos.Uuid = uuid.New().String()
 			etab.Fact_infos.IsFirst = true
 			etab.Fact_infos.Date = time.Now().Format("02-01-2006")
-			etab.Fact_infos.Link = "./media/factures/" + etab.Fact_infos.Uuid + "_" + etab.Fact_infos.Date + ".pdf"
+			etab.Fact_infos.Link = viper.GetString("links.cdn_fact") + etab.Fact_infos.Uuid + "_" + etab.Fact_infos.Date + ".pdf"
 			err, etab.Fact_infos.Id = dbCreateBossFirstFact(etabid, etab.Fact_infos.Uuid, etab.Fact_infos.Link)
 
 			if err != nil {
@@ -306,24 +308,46 @@ func getEtabOffer(c *gin.Context) {
 func getCSV(c *gin.Context) {
 	etabid, err := checkAuth(c)
 
+	if err != nil {
+		ret401(c)
+	}
+
 	start := c.Query("start")
 	end := c.Query("end")
 
 	if err != nil || start == "" || end == "" {
-		ret401(c)
+		ret422(c)
 	} else {
-		content, err := dbGetCSV(start, end, etabid)
+		content, err := eapCSV.DbGetCSVFacts(start, end, etabid)
 
 		if err != nil {
 			ret404(c)
 		} else {
-			filepath, err := toCSV(content, etabid, start, end)
 
+			filepath, err := eapCSV.FactstoCSV(content, etabid, start, end)
 			if err != nil {
 				ret404(c)
 			} else {
 				c.JSON(200, filepath)
 			}
+		}
+	}
+}
+
+func getCategories(c *gin.Context) {
+
+	etabid, err := checkAuth(c)
+
+	if err != nil {
+		ret401(c)
+	} else {
+
+		categories, err := dbGetCategories(etabid)
+
+		if err != nil {
+			ret404(c)
+		} else {
+			c.JSON(200, categories)
 		}
 	}
 }

@@ -1,10 +1,12 @@
 package main
 
 type JSONTODATA struct {
-	Mail    string `json:"mail"`
-	EtabID  int64  `json:"etab_id"`
-	OfferID int64  `json:"offer_id"`
-	ItemID  int64  `json:"item_id"`
+	Mail          string `json:"mail"`
+	EtabID        int64  `json:"etab_id"`
+	OfferID       int64  `json:"offer_id"`
+	ItemID        int64  `json:"item_id"`
+	Category_id   int64  `json:"id"`
+	Category_name string `json:"name"`
 }
 
 type PWD struct {
@@ -134,11 +136,7 @@ type Item struct {
 	Category    string  `json:"category"`
 }
 
-type RenderCSV struct {
-	Id         int     `db:"id"`
-	Name       string  `db:"name"`
-	Quantity   int     `db:"quantity"`
-	Price      float64 `db:"price"`
-	Order_id   int     `db:"order_id"`
-	Order_date string  `db:"created"`
+type Categories struct {
+	Id   int64  `db:"id"`
+	Name string `db:"name"`
 }

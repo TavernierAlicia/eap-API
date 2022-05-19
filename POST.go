@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"strconv"
 
 	eapMail "github.com/TavernierAlicia/eap-MAIL"
@@ -36,6 +35,8 @@ func Subscribe(c *gin.Context) {
 					})
 				}
 			}
+		} else {
+			ret422(c)
 		}
 
 	} else {
@@ -83,9 +84,12 @@ func Connect(c *gin.Context) {
 		// check password
 		token, err := dbCliConnect(connForm)
 		if err != nil {
-			ret422(c)
+			if err.Error() == "suspended account" {
+				ret403(c)
+			} else if err != nil {
+				ret401(c)
+			}
 		} else {
-			// send ok code
 			c.JSON(200, gin.H{
 				"message": "connected",
 				"token":   token,
@@ -108,7 +112,7 @@ func SM4resetPWD(c *gin.Context) {
 		ownerInfos, err := dbGetOwnerInfos(mail, etabId)
 		if err != nil {
 			// send error code
-			ret401(c)
+			ret404(c)
 		} else {
 			// Add security token
 			temptoken, err := dbAddSecuToken(etabId)
@@ -147,16 +151,19 @@ func QRConnect(c *gin.Context) {
 
 	if authToken != checkForm {
 		token, err := dbCheckNcreateSession(authToken.Token)
-		fmt.Println(token)
-
 		if err != nil {
-			ret503(c)
+			if err.Error() == "suspended account" {
+				ret403(c)
+			} else if err != nil {
+				ret401(c)
+			}
 		} else {
 			c.JSON(200, gin.H{
 				"message": "connected",
 				"token":   token,
 			})
 		}
+
 	} else {
 		ret422(c)
 	}
@@ -184,7 +191,7 @@ func placeOrder(c *gin.Context) {
 				orderid, err := dbPlaceOrder(PLOrder, etabid)
 
 				if err != nil {
-					ret404(c)
+					ret503(c)
 				} else {
 					c.JSON(200, orderid)
 				}
@@ -214,6 +221,30 @@ func postItem(c *gin.Context) {
 				c.JSON(200, "Inserted")
 			}
 
+		} else {
+			ret422(c)
+		}
+	}
+}
+
+func postCategory(c *gin.Context) {
+	etabid, err := checkAuth(c)
+
+	if err != nil {
+		ret401(c)
+	} else {
+		var category JSONTODATA
+		c.BindJSON(&category)
+
+		if category.Category_name != "" {
+			err = dbInsertCategory(etabid, category.Category_name)
+			if err != nil {
+				ret503(c)
+			} else {
+				c.JSON(200, gin.H{
+					"message": "category inserted",
+				})
+			}
 		} else {
 			ret422(c)
 		}

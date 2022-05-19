@@ -80,13 +80,23 @@ func dbPostSub(subForm eapMail.Subscription) (temptoken string, err error) {
 					err = createQR(clientToken, false)
 					printErr("create qr cli", "dbPostSub", err)
 				}
-				_, err = db.Exec("INSERT INTO items (etab_id, category, created) VALUES (?, ?, NOW()) ", etabId, "Cocktails")
-				printErr("insert item", "dbPostSub", err)
+				insertCat, _ := db.Exec("INSERT INTO categories (name, etab_id) VALUES (?, ?)", "Cocktails", etabId)
+				catId, err := insertCat.LastInsertId()
+				if err != nil {
+					printErr("insert new category", "dbPostSub", err)
+				} else {
+					_, err = db.Exec("INSERT INTO items (etab_id, category_id, description, created) VALUES (?, ?, ?, NOW()) ", etabId, catId, "Un super cockail de bienvenue, car il y a une première fois à tout!")
+					if err != nil {
+						printErr("insert item", "dbPostSub", err)
+					}
+				}
 			}
 		} else {
+			err = errors.New("insert etab already existing")
 			printErr("insert data, id already exists", "dbPostSub", err)
 		}
 	} else {
+		err = errors.New("insert etab already existing")
 		printErr("insert etab, already existing", "dbPostSub", err)
 	}
 
@@ -125,12 +135,23 @@ func dbCliConnect(connForm ClientConn) (token string, err error) {
 	} else if err != nil {
 		printErr("request", "dbCliConnect", err)
 	} else {
-		// create new auth token
-		token = uuid.New().String()
+		// check if suspended account
+		var suspended bool
+		err = db.Get(&suspended, "SELECT suspended FROM etabs WHERE id = ?", ifExists)
+		if err != nil {
+			printErr("insert connection", "dbCliConnect", err)
+		}
 
-		// insert connect data
-		_, err = db.Exec("INSERT INTO conections (etab_id, token) VALUES (?, ?)", ifExists, token)
-		printErr("insert connection", "dbCliConnect", err)
+		// create new auth token
+		if !suspended {
+			token = uuid.New().String()
+			// insert connect data
+			_, err = db.Exec("INSERT INTO conections (etab_id, token) VALUES (?, ?)", ifExists, token)
+			printErr("insert connection", "dbCliConnect", err)
+		} else {
+			err = errors.New("suspended account")
+		}
+
 	}
 	return token, err
 }
@@ -215,10 +236,23 @@ func dbCheckNcreateSession(authToken string) (token string, err error) {
 	} else if err != nil {
 		printErr("request", "dbCheckNcreateSession", err)
 	} else {
-		// create new token
-		token = uuid.New().String()
-		_, err = db.Exec("INSERT INTO conections (etab_id, token, is_admin) VALUES (?, ?, ?)", ifExists, token, 0)
-		printErr("insert row", "dbCheckNcreateSession", err)
+
+		// check if suspended account
+		var suspended bool
+		err = db.Get(&suspended, "SELECT suspended FROM etabs WHERE id = ?", ifExists)
+		if err != nil {
+			printErr("insert connection", "dbCliConnect", err)
+		}
+
+		if !suspended {
+			// create new token
+			token = uuid.New().String()
+			_, err = db.Exec("INSERT INTO conections (etab_id, token, is_admin) VALUES (?, ?, ?)", ifExists, token, 0)
+			printErr("insert row", "dbCheckNcreateSession", err)
+		} else {
+			err = errors.New("suspended account")
+		}
+
 	}
 
 	return token, err
@@ -312,7 +346,7 @@ func dbGetEtabMenu(etabid int) (menu Etab, err error) {
 	err = db.Get(&menu, "SELECT id, name, siret, addr, cp, city, country FROM etabs WHERE id = ?", etabid)
 	printErr("get row", "dbGetEtabMenu", err)
 
-	err = db.Select(&menu.Items, "SELECT id, in_stock, name, description, price, priceHH, category FROM items WHERE etab_id = ?", etabid)
+	err = db.Select(&menu.Items, "SELECT items.id, in_stock, items.name, description, price, priceHH, categories.name AS category FROM items JOIN categories on items.category_id = categories.id WHERE etab_id = ?", etabid)
 	printErr("get row", "dbGetEtabMenu", err)
 
 	return menu, err
@@ -374,7 +408,7 @@ func dbGetOrders(etabid int) (orders []*ReturnOrders, err error) {
 
 	for i := range orders {
 
-		err = db.Select(&orders[i].Order_items, "SELECT order_items.quantity, order_items.price, items.category, items.name FROM order_items JOIN items ON order_items.item_id = items.id WHERE order_id = ?", orders[0].Id)
+		err = db.Select(&orders[i].Order_items, "SELECT order_items.quantity, order_items.price, categories.name AS category, items.name FROM order_items JOIN items ON order_items.item_id = items.id JOIN categories ON items.category_id = categories.id WHERE order_id = ?", orders[0].Id)
 		printErr("get rows", "dbGetOrders", err)
 	}
 
@@ -389,7 +423,7 @@ func dbGetOrder(orderid int64) (order ReturnOrders, err error) {
 	err = db.Get(&order, "SELECT id, cli_uuid, totalTTC, totalHT, confirmed, ready, done, created FROM orders WHERE id = ?", orderid)
 	printErr("get row", "dbGetOrder", err)
 
-	err = db.Select(&order.Order_items, "SELECT order_items.quantity, order_items.price, items.category, items.name FROM order_items JOIN items ON order_items.item_id = items.id WHERE order_id = ?", orderid)
+	err = db.Select(&order.Order_items, "SELECT order_items.quantity, order_items.price, categories.name AS category, items.name FROM order_items JOIN items ON order_items.item_id = items.id JOIN categories ON items.category_id = categories.id WHERE order_id = ?", orderid)
 	printErr("get rows", "dbGetOrder", err)
 
 	return order, err
@@ -548,7 +582,7 @@ func dbUpdateOffer(etabid int64, offerid int64) (err error) {
 func dbInsertItem(item Item, etabid int64) (err error) {
 	db := dbConnect()
 
-	_, err = db.Exec("INSERT INTO items (etab_id, in_stock, name, description, price, priceHH, category) VALUES (?, ?, ?, ?, ?, ?, ?)", etabid, item.Stock, item.Name, item.Description, item.Price, item.PriceHH, item.Category)
+	_, err = db.Exec("INSERT INTO items (etab_id, in_stock, name, description, price, priceHH, category_id, created) VALUES (?, ?, ?, ?, ?, ?, ?,NOW())", etabid, item.Stock, item.Name, item.Description, item.Price, item.PriceHH, item.Category)
 	printErr("insert row", "dbInsertItem", err)
 	return err
 }
@@ -556,7 +590,7 @@ func dbInsertItem(item Item, etabid int64) (err error) {
 func dbEditItem(item Item) (err error) {
 	db := dbConnect()
 
-	_, err = db.Exec("UPDATE items SET in_stock = ?, name = ?, description = ?, price = ?, priceHH = ?, category = ?, modified = ? WHERE id = ?", item.Stock, item.Name, item.Description, item.Price, item.PriceHH, item.Category, time.Now(), item.Id)
+	_, err = db.Exec("UPDATE items SET in_stock = ?, name = ?, description = ?, price = ?, priceHH = ?, category_id = ?, modified = ? WHERE id = ?", item.Stock, item.Name, item.Description, item.Price, item.PriceHH, item.Category, time.Now(), item.Id)
 	printErr("update row", "dbEditItem", err)
 
 	return err
@@ -571,12 +605,74 @@ func dbDeleteItem(itemid int64) (err error) {
 	return err
 }
 
-func dbGetCSV(start string, end string, etabid int64) (result []*RenderCSV, err error) {
+func dbGetCategories(etabid int64) (categories []*Categories, err error) {
 	db := dbConnect()
 
-	err = db.Select(&result, "SELECT order_items.id, order_items.order_id, order_items.quantity, order_items.created, order_items.price, items.name FROM `order_items` JOIN items ON items.id = order_items.item_id WHERE items.etab_id = ? and order_items.created BETWEEN ? and ?", etabid, start, end)
-	printErr("getting csv content", "dbGetCSV", err)
+	err = db.Select(&categories, "SELECT id, name FROM categories WHERE etab_id = ?", etabid)
 
-	return result, err
+	if err != nil {
+		printErr("get categories", "dbGetCategories", err)
+	}
 
+	return categories, err
+}
+
+func dbInsertCategory(etabid int64, category string) (err error) {
+	db := dbConnect()
+
+	_, err = db.Exec("INSERT INTO categories (name, etab_id) VALUES (?, ?)", category, etabid)
+
+	if err != nil {
+		printErr("insert category", "dbInsertCategory", err)
+	}
+	return err
+}
+
+func dbEditCategory(etabid int64, categoryName string, categoryId int64) (err error) {
+	db := dbConnect()
+
+	_, err = db.Exec("UPDATE categories SET name = ? WHERE id = ? AND etab_id = ?", categoryName, categoryId, etabid)
+
+	if err != nil {
+		printErr("update category", "dbEditCategory", err)
+	}
+
+	return err
+}
+
+func dbDeleteCategory(etabid int64, categoryId int64) (err error) {
+	db := dbConnect()
+
+	_, err = db.Exec("DELETE FROM categories WHERE id = ? and etab_id = ?", categoryId, etabid)
+
+	if err != nil {
+		printErr("delete category", "dbDeleteCategory", err)
+	}
+
+	return err
+}
+
+func dbUnsub(etabId int64) (data eapFact.FactEtab, date string, err error) {
+	db := dbConnect()
+
+	// first get account data
+	err = db.Get(&data, "SELECT owner_civility, owner_name, owner_surname, mail, phone, name, fact_addr, fact_cp, fact_country, offer FROM etabs WHERE id = ?", etabId)
+	if err != nil {
+		printErr("get user data", "dbUnsub", err)
+
+	} else {
+		// now unsub
+		_, err = db.Exec("UPDATE etabs SET offer = NULL WHERE id = ?", etabId)
+		if err != nil {
+			printErr("unsubscribe account", "dbUnsub", err)
+		}
+
+		// and get delete date
+		err = db.Get(&date, "SELECT created_at FROM etabs WHERE id = ?", etabId)
+		if err != nil {
+			printErr("get account deletion date", "dbUnsub", err)
+		}
+	}
+
+	return data, date, err
 }

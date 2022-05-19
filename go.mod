@@ -3,8 +3,9 @@ module github.com/TavernierAlicia/eap-API
 go 1.17
 
 require (
-	github.com/TavernierAlicia/eap-FACT v0.0.0-20220513123934-7797e4bb8dec
-	github.com/TavernierAlicia/eap-MAIL v0.0.0-20220515161114-56e750ca8b7b
+	github.com/TavernierAlicia/eap-CSV v0.0.0-20220516184417-0f45e2192cbd
+	github.com/TavernierAlicia/eap-FACT v0.0.0-20220516184454-0e128e5dd519
+	github.com/TavernierAlicia/eap-MAIL v0.0.0-20220516184426-116c98fa25cb
 	github.com/aviddiviner/gin-limit v0.0.0-20170918012823-43b5f79762c1
 	github.com/boombuler/barcode v1.0.1
 	github.com/gin-gonic/gin v1.7.7

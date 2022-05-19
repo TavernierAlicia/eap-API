@@ -37,6 +37,7 @@ func Router() {
 	router.GET("payment-method", getPaymentMethod)
 	router.GET("offers", getEtabOffer)
 	router.GET("csv", getCSV)
+	router.GET("categories", getCategories)
 
 	//POST
 	// subscribe
@@ -50,6 +51,7 @@ func Router() {
 	// place order
 	router.POST("place-order", placeOrder) // TODO: make fact
 	router.POST("item", postItem)
+	router.POST("categories", postCategory)
 
 	//PUT
 	router.PUT("update-order", updateOrderStatus)
@@ -58,11 +60,14 @@ func Router() {
 	router.PUT("payment-method", editPaymentMethod)
 	router.PUT("offers", editOffers)
 	router.PUT("item", putItem)
+	router.PUT("categories", putCategory)
+	router.PUT("unsubscribe", unsub)
 
 	//DELETE
 	router.DELETE("reset-all-connections", deleteAllconn)
 	router.DELETE("disconnect", disconnect)
 	router.DELETE("item", deleteItem)
+	router.DELETE("categories", deleteCategory)
 
 	// Run
 	router.Run(":9999")
