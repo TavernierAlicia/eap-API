@@ -3,6 +3,9 @@ package main
 import (
 	"errors"
 	"regexp"
+	"fmt"
+	"os"
+	"github.com/spf13/viper"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -75,6 +78,13 @@ func ret401(c *gin.Context) {
 	})
 }
 
+func ret409(c *gin.Context) {
+	c.JSON(409, gin.H{
+		"message": "This data is incorrect",
+		"error":   "Conflict",
+	})
+}
+
 func ret422(c *gin.Context) {
 	c.JSON(422, gin.H{
 		"message": "cannot use this data",
@@ -97,4 +107,15 @@ func printErr(desc string, nomFunc string, err error) {
 	if err != nil {
 		logger.Error("Cannot "+desc, zap.String("Func", nomFunc), zap.Error(err))
 	}
+}
+
+
+func deleteOldPic(pic string) (err error) {
+	if pic != viper.GetString("links.cdn_pics")+"default.png" {
+		err = os.Remove(pic)
+		if err != nil {
+			fmt.Println("Cannot remove old pic : ", err)
+		}
+	}
+	return err
 }

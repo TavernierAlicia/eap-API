@@ -1,5 +1,9 @@
 package main
 
+import (
+	"github.com/gorilla/websocket"
+)
+
 type JSONTODATA struct {
 	Mail          string `json:"mail"`
 	EtabID        int64  `json:"etab_id"`
@@ -42,6 +46,7 @@ type Menu struct {
 	Desc     string  `db:"description"`
 	Price    float64 `db:"price"`
 	HHPrice  float64 `db:"priceHH"`
+	CategoryID int   `db:"catid"`
 	Category string  `db:"category"`
 }
 
@@ -53,23 +58,14 @@ type Planning struct {
 	Is_HH     bool `db:"is_HH"`
 }
 
-type Order struct {
-	Cli_uuid    string        `json:"cli_uuid"`
-	Token       string        `json:"token"`
-	TotalTTC    float64       `json:"totalTTC"`
-	TotalHT     float64       `json:"totalHT"`
-	Order_items []*OrderItems `json:"Order_items"`
-}
 
-type OrderItems struct {
-	Item_id  int     `json:"item_id"`
-	Price    float64 `json:"price"`
-	Quantity int     `json:"quantity"`
+type CheckOrderItems struct {
+	Price    float64 `db:"price"`
+	PriceHH float64  `db:"priceHH"`
+	Quantity int     `db:"quantity"`
 }
 
 type OrderDetails struct {
-	Cli_uuid  string `json:"cli_uuid"`
-	Token     string `json:"token"`
 	OrderId   int    `json:"order_id"`
 	Confirmed bool   `json:"confirmed"`
 	Ready     bool   `json:"ready"`
@@ -107,6 +103,7 @@ type EtabParams struct {
 	License   string `db:"licence"`
 	Siret     string `db:"siret"`
 	Phone     string `db:"phone"`
+	Pic string `db:"picture"`
 	Horaires  []*Planning
 }
 
@@ -139,4 +136,25 @@ type Item struct {
 type Categories struct {
 	Id   int64  `db:"id"`
 	Name string `db:"name"`
+}
+
+type Factures struct {
+	Id int64 `db:"id"`
+	Cli_uuid string `db:"cli_uuid"`
+	Date string `db:"created"`
+	Total float64 `db:"totalTTC"`
+	IsDone bool `db:"done"`
+	Link string `db:"fact_link"`
+}
+
+
+type Clients struct {
+	Uuid string
+	OrderId string
+	Co *websocket.Conn
+}
+
+type WSData struct {
+	OrderId string `json:"orderid"`
+	Status string `json:"status"`
 }

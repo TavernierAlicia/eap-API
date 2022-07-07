@@ -26,10 +26,11 @@ func Router() {
 	//GET
 	router.GET("get-etabs4reset-pwd", getEtabs)
 	router.GET("menu", getMenu)
-	router.GET("planning", getPlanning)
+	router.GET("menu-cli/:etab", getMenuCli)
+	router.GET("planning/:etab", getPlanning)
 	router.GET("orders", getOrders)
-	router.GET("order", getOrder)
-	router.GET("sendmail-fact", sendFact)
+	router.GET("order/:etab/:order_id", getOrder)
+	router.GET("get-fact", sendFact)
 	router.GET("fact-link", getFactLink)
 	router.GET("worker-fact", getBossFact) // TODO: make fact
 	router.GET("etab-params", getEtabParams)
@@ -38,18 +39,23 @@ func Router() {
 	router.GET("offers", getEtabOffer)
 	router.GET("csv", getCSV)
 	router.GET("categories", getCategories)
+	router.GET("all-tickets", getAllTickets)
+	router.GET("get-qrs", getQRs)
+
 
 	//POST
 	// subscribe
-	router.POST("subscribe", Subscribe) // TODO: make fact
+	router.POST("subscribe", Subscribe)
+	router.POST("contact", Send)
 	// connect
 	router.POST("connect", Connect)
 	router.POST("bartender", QRConnect)
+	router.POST("qr/:token", Cli)
 	// password creation
 	router.POST("pwd-create", createPWD)
 	router.POST("sendMail4reset-pwd", SM4resetPWD)
 	// place order
-	router.POST("place-order", placeOrder) // TODO: make fact
+	router.POST("place-order", placeOrder)
 	router.POST("item", postItem)
 	router.POST("categories", postCategory)
 
@@ -62,6 +68,8 @@ func Router() {
 	router.PUT("item", putItem)
 	router.PUT("categories", putCategory)
 	router.PUT("unsubscribe", unsub)
+	router.PUT("update-planning", updatePlanning)
+	router.PUT("update-pic", updateEtabPic)
 
 	//DELETE
 	router.DELETE("reset-all-connections", deleteAllconn)
