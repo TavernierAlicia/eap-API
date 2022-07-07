@@ -2,9 +2,15 @@ package main
 
 import (
 	"strconv"
-
+	"fmt"
 	eapMail "github.com/TavernierAlicia/eap-MAIL"
+	eapFact "github.com/TavernierAlicia/eap-FACT"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/spf13/viper"
+	"net/http"
+
+
 )
 
 func Subscribe(c *gin.Context) {
@@ -170,7 +176,7 @@ func QRConnect(c *gin.Context) {
 }
 
 func placeOrder(c *gin.Context) {
-	var PLOrder Order
+	var PLOrder eapFact.Order
 
 	c.BindJSON(&PLOrder)
 
@@ -179,21 +185,38 @@ func placeOrder(c *gin.Context) {
 		etabid, err := dbCheckCliToken(PLOrder.Token)
 
 		if err != nil {
-			ret401(c)
+			ret404(c)
 		} else {
 			// check client_uuid
-			err := dbInsertCliSess(PLOrder.Cli_uuid)
+			err := dbCheckCliSess(PLOrder.Cli_uuid)
 
 			if err != nil {
-				ret404(c)
+				ret401(c)
 			} else {
 				// Now insert order
-				orderid, err := dbPlaceOrder(PLOrder, etabid)
+				
+				link := viper.GetString("links.cdn_tickets")
+				orderid, uuidticket, err := dbPlaceOrder(PLOrder, etabid, link)
+				dest := viper.GetString("links.cdn_tickets_dest")+uuidticket+".pdf"
+
+
+				etab, err := dbGetEtabInfos(etabid)
+				err = eapFact.CreateTicket(orderid, dest, PLOrder, etab)
 
 				if err != nil {
-					ret503(c)
+					if err == invalidData {
+						ret409(c)
+					} else {
+						fmt.Println(err)
+						ret503(c)
+					}
+
 				} else {
 					c.JSON(200, orderid)
+					_, err := http.Post("http://ws.easy-as-pie.fr/new-order/"+strconv.Itoa(etabid), "", nil)
+					if err != nil {
+						fmt.Println(err)
+					}
 				}
 			}
 		}
@@ -212,7 +235,7 @@ func postItem(c *gin.Context) {
 		var item Item
 		c.BindJSON(&item)
 
-		if item.Name != "" && item.Description != "" {
+		if item.Name != "" && item.Price > 0 && item.Category != "" {
 			err = dbInsertItem(item, etabid)
 
 			if err != nil {
@@ -248,5 +271,51 @@ func postCategory(c *gin.Context) {
 		} else {
 			ret422(c)
 		}
+	}
+}
+
+
+func Cli(c *gin.Context) {
+
+	token := c.Param("token")
+
+	if token == "" {
+		ret422(c)
+	} else {
+		_, err := dbCheckCliToken(token)
+
+		if err != nil {
+				ret401(c)
+		} else {
+
+			clientUuid := uuid.New().String()
+			err := dbInsertCliSess(clientUuid)
+
+			if err != nil {
+				ret503(c)
+			} else {
+				c.JSON(200, clientUuid)
+			}
+		}
+	}
+}
+
+
+func Send(c *gin.Context) {
+
+	var msg eapMail.Message
+	var check eapMail.Message
+	c.BindJSON(&msg)
+
+	if msg != check && msg.Name != "" && regMail(msg.Mail) == true && msg.Msg != "" {
+		err := eapMail.SendContact(msg)
+
+		if err != nil {
+			ret503(c)
+		} else {
+			c.JSON(200, "send")
+		}
+	} else {
+		ret422(c)
 	}
 }

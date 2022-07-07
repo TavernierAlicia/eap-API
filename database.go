@@ -2,8 +2,8 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"time"
+	"fmt"
 
 	eapFact "github.com/TavernierAlicia/eap-FACT"
 	eapMail "github.com/TavernierAlicia/eap-MAIL"
@@ -12,6 +12,10 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/spf13/viper"
 )
+
+var noRow = errors.New("sql: no rows in result set")
+var invalidData = errors.New("incorrect data")
+
 
 func dbConnect() *sqlx.DB {
 
@@ -37,7 +41,6 @@ func dbPostSub(subForm eapMail.Subscription) (temptoken string, err error) {
 
 	// Verify if user already exists
 	ifExists := 0
-	var noRow = errors.New("sql: no rows in result set")
 	err = db.Get(&ifExists, "SELECT id FROM etabs WHERE siret = ?", subForm.Siret)
 
 	if err != nil {
@@ -56,7 +59,7 @@ func dbPostSub(subForm eapMail.Subscription) (temptoken string, err error) {
 					printErr("get lastrowid", "PostSubForm", err)
 				}
 
-				_, err = db.Exec("INSERT INTO planning (etab_id, day, start, end) VALUES (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?) ", etabId, 0, 540, 800, etabId, 0, 1000, 2000, etabId, 1, 540, 800, etabId, 1, 1000, 2000, etabId, 2, 540, 800, etabId, 2, 1000, 2000, etabId, 3, 540, 800, etabId, 3, 1000, 2000, etabId, 4, 540, 800, etabId, 4, 1000, 2000, etabId, 5, 540, 800, etabId, 5, 1000, 2000)
+				_, err = db.Exec("INSERT INTO planning (etab_id, day, start, end) VALUES (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ? , ?), (?, ?, ?, ?) ", etabId, 0, 540, 800, etabId, 0, 1000, 2000, etabId, 1, 540, 800, etabId, 1, 1000, 2000, etabId, 2, 540, 800, etabId, 2, 1000, 2000, etabId, 3, 540, 800, etabId, 3, 1000, 2000, etabId, 4, 540, 800, etabId, 4, 1000, 2000, etabId, 5, 540, 800, etabId, 5, 1000, 2000, etabId, 6, 1000, 2000)
 				printErr("insert planning", "dbPostSub", err)
 
 				_, err = db.Exec("INSERT INTO planning (etab_id, day, start, end, is_HH) VALUES (?, ?, ?, ?, ?), (?, ?, ?, ?, ?)", etabId, 5, 1000, 1300, 1, etabId, 3, 1000, 1300, 1)
@@ -108,7 +111,6 @@ func dbInsertNewPWD(pwdForm PWD) (err error) {
 	db := dbConnect()
 
 	ifExists := 0
-	var noRow = errors.New("sql: no rows in result set")
 	err = db.Get(&ifExists, "SELECT id FROM etabs WHERE security_token = ?", pwdForm.Token)
 
 	if ifExists == 0 || (err != nil && err.Error() == noRow.Error()) {
@@ -127,7 +129,6 @@ func dbCliConnect(connForm ClientConn) (token string, err error) {
 	db := dbConnect()
 
 	ifExists := 0
-	var noRow = errors.New("sql: no rows in result set")
 	err = db.Get(&ifExists, "SELECT id FROM etabs WHERE mail = ? AND hash_pwd = ?", connForm.Mail, connForm.Password)
 
 	if ifExists == 0 || (err != nil && err.Error() == noRow.Error()) {
@@ -226,7 +227,6 @@ func dbCheckNcreateSession(authToken string) (token string, err error) {
 	db := dbConnect()
 
 	var ifExists int
-	var noRow = errors.New("sql: no rows in result set")
 
 	err = db.Get(&ifExists, "SELECT etab_id FROM qr_tokens WHERE token = ? ", authToken)
 
@@ -262,8 +262,6 @@ func dbCheckCliToken(token string) (etabid int, err error) {
 
 	db := dbConnect()
 
-	var noRow = errors.New("sql: no rows in result set")
-
 	err = db.Get(&etabid, "SELECT etab_id FROM qr_tokens WHERE token = ? ", token)
 
 	if etabid == 0 || (err != nil && err.Error() == noRow.Error()) {
@@ -279,8 +277,6 @@ func dbCheckCliToken(token string) (etabid int, err error) {
 func dbCheckToken(token string) (etabid int, err error) {
 
 	db := dbConnect()
-
-	var noRow = errors.New("sql: no rows in result set")
 
 	err = db.Get(&etabid, "SELECT etab_id FROM conections WHERE token = ? ", token)
 
@@ -298,7 +294,6 @@ func dbInsertCliSess(clientUuid string) (err error) {
 	db := dbConnect()
 
 	var ifExists int
-	var noRow = errors.New("sql: no rows in result set")
 
 	err = db.Get(&ifExists, "SELECT id FROM cli_sess WHERE cli_uuid = ? ", clientUuid)
 
@@ -319,13 +314,29 @@ func dbInsertCliSess(clientUuid string) (err error) {
 	return err
 }
 
-func dbCheckCliSess(cli_uuid string, orderid int64) (err error) {
+func dbCheckOrderCliSess(cli_uuid string, orderid int64) (err error) {
 	db := dbConnect()
 
 	var ifExists int
-	var noRow = errors.New("sql: no rows in result set")
 
 	err = db.Get(&ifExists, "SELECT id FROM orders WHERE cli_uuid = ? AND id = ?", cli_uuid, orderid)
+
+	if ifExists == 0 || (err != nil && err.Error() == noRow.Error()) {
+		printErr("get row", "dbCheckOrderCliSess", err)
+
+	} else if err != nil {
+		printErr("request", "dbCheckOrderCliSess", err)
+	}
+
+	return err
+}
+
+func dbCheckCliSess(cli_uuid string) (err error) {
+	db := dbConnect()
+
+	var ifExists int
+
+	err = db.Get(&ifExists, "SELECT id FROM cli_sess WHERE cli_uuid = ?", cli_uuid)
 
 	if ifExists == 0 || (err != nil && err.Error() == noRow.Error()) {
 		printErr("get row", "dbCheckCliSess", err)
@@ -346,7 +357,7 @@ func dbGetEtabMenu(etabid int) (menu Etab, err error) {
 	err = db.Get(&menu, "SELECT id, name, siret, addr, cp, city, country FROM etabs WHERE id = ?", etabid)
 	printErr("get row", "dbGetEtabMenu", err)
 
-	err = db.Select(&menu.Items, "SELECT items.id, in_stock, items.name, description, price, priceHH, categories.name AS category FROM items JOIN categories on items.category_id = categories.id WHERE etab_id = ?", etabid)
+	err = db.Select(&menu.Items, "SELECT items.id, in_stock, items.name, description, price, priceHH, categories.id AS catid, categories.name AS category FROM items JOIN categories on items.category_id = categories.id WHERE items.etab_id = ?", etabid)
 	printErr("get row", "dbGetEtabMenu", err)
 
 	return menu, err
@@ -363,11 +374,36 @@ func dbGetPlanning(etabid int) (planning []*Planning, err error) {
 	return planning, err
 }
 
-func dbPlaceOrder(PLOrder Order, etabid int) (orderid int64, err error) {
+func dbPlaceOrder(PLOrder eapFact.Order, etabid int, link string) (orderid int64, uuid_fact string, err error) {
 	db := dbConnect()
 
+	// check prices
+	var count float64
+	for _, i := range PLOrder.Order_items {
+		var compare CheckOrderItems
+		err = db.Get(&compare, "SELECT priceHH, price FROM items WHERE id = ? AND etab_id = ?", i.Item_id, etabid)
+
+		if err != nil {
+			printErr("get item", "dbPlaceOrder", err)
+			return 0, "", invalidData
+		}
+
+		if compare.PriceHH == i.Price {
+			count = count + (compare.PriceHH * float64(i.Quantity))
+		} else if compare.Price == i.Price {
+			count = count + (compare.Price * float64(i.Quantity))
+		} else {
+			return 0, "", invalidData
+		}
+	}
+
+	if count != PLOrder.TotalTTC {
+		return 0, "", invalidData
+	}
+
 	// insert order
-	insertOrder, err := db.Exec("INSERT INTO orders (cli_uuid, etab_id, totalTTC, totalHT) VALUES (?, ?, ?, ?)", PLOrder.Cli_uuid, etabid, PLOrder.TotalTTC, PLOrder.TotalHT)
+	uuid_fact = uuid.New().String()
+	insertOrder, err := db.Exec("INSERT INTO orders (cli_uuid, etab_id, fact_link, totalTTC, totalHT) VALUES (?, ?, ?, ?, ?)", PLOrder.Cli_uuid, etabid, link+uuid_fact+".pdf", PLOrder.TotalTTC, PLOrder.TotalHT)
 	if err != nil {
 		printErr("insert row", "dbPlaceOrder", err)
 	} else {
@@ -378,21 +414,20 @@ func dbPlaceOrder(PLOrder Order, etabid int) (orderid int64, err error) {
 		} else {
 			// insert all items
 			for _, item := range PLOrder.Order_items {
-				fmt.Println(item.Item_id)
 				_, err := db.Exec("INSERT INTO order_items (item_id, order_id, price, quantity) VALUES (?, ?, ?, ?)", item.Item_id, orderid, item.Price, item.Quantity)
 				printErr("insert row", "dbPlaceOrder", err)
 			}
 		}
 	}
 
-	return orderid, err
+	return orderid, uuid_fact, err
 }
 
 func dbUpdateOrderStatus(details OrderDetails) (err error) {
 	db := dbConnect()
 
 	// update only confirmed
-	_, err = db.Exec("UPDATE orders SET confirmed = ? WHERE id = ?", details.Confirmed, details.OrderId)
+	_, err = db.Exec("UPDATE orders SET confirmed = ?, ready = ?, done = ? WHERE id = ?", details.Confirmed, details.Ready, details.Done, details.OrderId)
 	printErr("update row", "dbUpdateOrderStatus", err)
 
 	return err
@@ -403,12 +438,12 @@ func dbGetOrders(etabid int) (orders []*ReturnOrders, err error) {
 	db := dbConnect()
 	orders = []*ReturnOrders{}
 
-	err = db.Select(&orders, "SELECT id, cli_uuid, totalTTC, totalHT, confirmed, ready, done, created FROM orders WHERE etab_id = ?", etabid)
+	err = db.Select(&orders, "SELECT id, cli_uuid, totalTTC, totalHT, confirmed, ready, done, created FROM orders WHERE etab_id = ? AND created > NOW() - interval 2 HOUR", etabid)
 	printErr("get rows", "dbGetOrders", err)
 
 	for i := range orders {
 
-		err = db.Select(&orders[i].Order_items, "SELECT order_items.quantity, order_items.price, categories.name AS category, items.name FROM order_items JOIN items ON order_items.item_id = items.id JOIN categories ON items.category_id = categories.id WHERE order_id = ?", orders[0].Id)
+		err = db.Select(&orders[i].Order_items, "SELECT order_items.quantity, order_items.price, categories.name AS category, items.name FROM order_items JOIN items ON order_items.item_id = items.id JOIN categories ON items.category_id = categories.id WHERE order_id = ?", orders[i].Id)
 		printErr("get rows", "dbGetOrders", err)
 	}
 
@@ -434,7 +469,7 @@ func dbGetOrderFact(orderid int64) (link string, err error) {
 
 	var noRow = errors.New("sql: no rows in result set")
 
-	err = db.Get(&link, "SELECT fact_link FROM orders WHERE id = ?", orderid)
+	err = db.Get(&link, "SELECT IFNULL(fact_link, '') FROM orders WHERE id = ?", orderid)
 
 	if link == "" || (err != nil && err.Error() == noRow.Error()) {
 		printErr("get row", "dbGetOrderFact", err)
@@ -445,6 +480,18 @@ func dbGetOrderFact(orderid int64) (link string, err error) {
 
 	return link, err
 
+}
+
+func dbGetAllTickets(etabid int64, datemin string, datemax string) (factures []*Factures, err error) {
+
+	db := dbConnect()
+	err = db.Select(&factures, "SELECT id, cli_uuid, created, totalTTC, done, IFNULL(fact_link, '') AS fact_link FROM orders WHERE etab_id = ? AND created BETWEEN ? AND ?", etabid, datemin, datemax)
+
+	if err != nil {
+		printErr("get tickets", "dbGetAllTickets", err)
+	}
+
+	return factures, err
 }
 
 func dbGetFactEtab(etabid int64) (etab eapFact.FactEtab, err error) {
@@ -478,7 +525,8 @@ func dbGetEtabParams(etabid int64) (params EtabParams, err error) {
 
 	db := dbConnect()
 
-	err = db.Get(&params, "SELECT name, phone, addr, cp, city, country, IFNULL(insta, '') AS insta , IFNULL(twitter, '') AS twitter, IFNULL(facebook, '') AS facebook, licence, siret FROM etabs WHERE etabs.id = ?", etabid)
+
+	err = db.Get(&params, "SELECT name, phone, addr, cp, city, country, IFNULL(picture, '') AS picture, IFNULL(insta, '') AS insta , IFNULL(twitter, '') AS twitter, IFNULL(facebook, '') AS facebook, licence, siret FROM etabs WHERE etabs.id = ?", etabid)
 
 	if err != nil {
 		printErr("get row", "dbGetEtabParams", err)
@@ -491,8 +539,28 @@ func dbGetEtabParams(etabid int64) (params EtabParams, err error) {
 	return params, err
 }
 
+func dbGetQRs(etabid int64) (qr1 string, qr0 string, err error) {
+	db := dbConnect()
+
+	err = db.Get(&qr1, "SELECT CONCAT('"+viper.GetString("links.cdn_qr")+"/bartender/', token, '.png') FROM qr_tokens WHERE etab_id = ? AND type = 1 ", etabid)
+
+	if err != nil {
+		printErr("get QR1", "dbGetQRs", err)
+	}
+
+	err = db.Get(&qr0, "SELECT CONCAT('"+viper.GetString("links.cdn_qr")+"/menu_qr/', token, '.png') FROM qr_tokens WHERE etab_id = ? AND type = 0 ", etabid)
+
+	if err != nil {
+		printErr("get QR0", "dbGetQRs", err)
+	}
+
+	return qr0, qr1, err
+
+}
+
 func dbUpdateEtabParams(params EtabParams, etabid int64) (err error) {
 	db := dbConnect()
+
 
 	_, err = db.Exec("UPDATE etabs SET name = ?, addr = ?, cp = ?, city = ?, country = ?, licence = ?, siret = ?, phone = ?, insta = ?, twitter = ?, facebook = ? WHERE id = ?", params.Etab_name, params.Addr, params.Cp, params.City, params.Country, params.License, params.Siret, params.Phone, params.Insta, params.Twitter, params.Facebook, etabid)
 
@@ -512,6 +580,28 @@ func dbUpdateEtabParams(params EtabParams, etabid int64) (err error) {
 		}
 	}
 	return err
+}
+
+func dbUpdatePic(link string, etabid int64) (path string, err error) {
+	db := dbConnect()
+
+	oldpic := ""
+	err = db.Get(&oldpic, "SELECT picture FROM etabs WHERE id = ?", etabid)
+	if err != nil {
+		printErr("get old pic", "dbupdatePic", err)
+	}
+
+	err = deleteOldPic(oldpic)
+	if err != nil {
+		printErr("delete old pic", "dbUpdatePic", err)
+	}
+
+	_, err = db.Exec("UPDATE etabs SET picture = ? WHERE id = ?", link, etabid)
+
+	if err != nil {
+		printErr("update picture", "dbUpdatePic", err)
+	}
+	return link, err
 }
 
 func dbGetProfile(etabid int64) (profile Profile, err error) {
@@ -675,4 +765,62 @@ func dbUnsub(etabId int64) (data eapFact.FactEtab, date string, err error) {
 	}
 
 	return data, date, err
+}
+
+func dbEditPlanning(etabid int64, planning []*Planning) (err error) {
+	db := dbConnect()
+
+
+	_, err = db.Exec("DELETE FROM planning WHERE etab_id = ?", etabid)
+
+	if err != nil {
+		printErr("delete all rows in planning", "dbEditPlanning", err)
+
+	} else {
+
+		for _, day := range planning {
+			_, err = db.Exec("INSERT INTO planning (etab_id, day, start, end, is_active, is_HH) VALUES (?, ?, ? , ?, ?, ?)", etabid, day.Day, day.Start, day.End, day.Is_Active, day.Is_HH)
+
+			if err != nil {
+				printErr("insert new row in planning", "dbEditPlanning", err)
+				return err
+			}
+		}
+	}
+	return err
+}
+
+func dbGetEtabInfos(etabid int) (etab eapFact.Infos, err error) {
+	db := dbConnect()
+
+	err = db.Get(&etab, "SELECT name, addr, cp, city, country, picture FROM etabs WHERE id = ?", etabid)
+
+	if err != nil {
+		printErr("get etab infos", "dbGetEtabInfos", err)
+	}
+	return etab, err
+}
+
+func wsCliAuth(cliId string, orderid string) (err error) {
+	db := dbConnect()
+
+	var id int64 
+
+	err = db.Get(&id, "SELECT id FROM orders WHERE cli_uuid = ? AND id = ?", cliId, orderid)
+
+	if err != nil {
+		printErr("auth cli", "wsCliAuth", err)
+	}
+	return err
+}
+
+func dbGetOrderStatus(orderid int) (status string, err error) {
+	db := dbConnect()
+
+	err = db.Get(&status, "SELECT (CASE WHEN confirmed = 1 AND ready = 0 AND done = 0 THEN 'confirmed' WHEN ready = 1 AND done = 0 THEN 'ready' WHEN done = 1 THEN 'done' END) AS status FROM orders WHERE id = ?", orderid)
+
+	if err != nil {
+		printErr("get order status", "dbGetOrderStatus", err)
+	}
+	return status, err
 }

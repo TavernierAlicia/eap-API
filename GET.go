@@ -3,6 +3,7 @@ package main
 import (
 	"strconv"
 	"time"
+	"fmt"
 
 	eapCSV "github.com/TavernierAlicia/eap-CSV"
 	eapFact "github.com/TavernierAlicia/eap-FACT"
@@ -31,45 +32,75 @@ func getEtabs(c *gin.Context) {
 	}
 }
 
-func getMenu(c *gin.Context) {
-	token := c.Request.Header.Get("token")
-	clientUuid := c.Query("cli_uuid")
 
-	if token == "" || clientUuid == "" {
-		// send error code
+func getMenuCli(c *gin.Context) {
+	etabToken := c.Param("etab")
+	token := c.Request.Header.Get("Authorization")
+
+	if token == "" {
 		ret422(c)
 	} else {
-		etabid, err := dbCheckCliToken(token)
-
+		etabid, err := dbCheckCliToken(etabToken)
 		if err != nil {
-			ret401(c)
+			ret404(c)
 		} else {
-			err := dbInsertCliSess(clientUuid)
+			err := dbCheckCliSess(token)
 
 			if err != nil {
-				ret404(c)
+				ret401(c)
 			} else {
-				menu, err := dbGetEtabMenu(etabid)
 
+				menu, err := dbGetEtabMenu(etabid)
 				if err != nil {
 					ret404(c)
 				} else {
 					c.JSON(200, menu)
 				}
 			}
+		} 
+	}
+}
+
+
+func getMenu(c *gin.Context) {
+	token := c.Request.Header.Get("Authorization")
+
+	if token == "" {
+		ret422(c)
+	} else {
+		etabid, err := dbCheckCliToken(token)
+
+		if err != nil {
+			etabid, err = dbCheckToken(token)
+			if err != nil {
+				ret401(c)
+			
+			} else {
+
+					menu, err := dbGetEtabMenu(etabid)
+
+					if err != nil {
+						ret404(c)
+					} else {
+						c.JSON(200, menu)
+					}
+			}
 		}
 	}
 }
 
 func getPlanning(c *gin.Context) {
-	token := c.Request.Header.Get("token")
+	etabToken := c.Param("etab")
+	token := c.Request.Header.Get("Authorization")
 
-	if token != "" {
-		// check token && get etabid
-		etabid, err := dbCheckCliToken(token)
+	if token == "" {
+		ret422(c)
+	} else {
+		etabid, err := dbCheckCliToken(etabToken)
 		if err != nil {
-			// try same for boss
-			etabid, err := dbCheckToken(token)
+			ret404(c)
+		} else {
+			err := dbCheckCliSess(token)
 
 			if err != nil {
 				ret401(c)
@@ -81,21 +112,13 @@ func getPlanning(c *gin.Context) {
 					c.JSON(200, planning)
 				}
 			}
-		} else {
-			planning, err := dbGetPlanning(etabid)
-			if err != nil {
-				ret404(c)
-			} else {
-				c.JSON(200, planning)
-			}
-		}
-	} else {
-		ret422(c)
+		} 
 	}
 }
 
+
 func getOrders(c *gin.Context) {
-	token := c.Request.Header.Get("token")
+	token := c.Request.Header.Get("Authorization")
 
 	if token != "" {
 		etabid, err := dbCheckToken(token)
@@ -116,9 +139,11 @@ func getOrders(c *gin.Context) {
 }
 
 func getOrder(c *gin.Context) {
-	token := c.Request.Header.Get("token")
-	cli_uuid := c.Query("cli_uuid")
-	orderid, err := strconv.ParseInt(c.Query("order_id"), 10, 64)
+
+	cli_uuid := c.Request.Header.Get("Authorization")
+	token := c.Param("etab")
+
+	orderid, err := strconv.ParseInt(c.Param("order_id"), 10, 64)
 
 	if token != "" && orderid != 0 && err == nil {
 		// check cli token
@@ -128,7 +153,7 @@ func getOrder(c *gin.Context) {
 			ret401(c)
 		} else {
 			// check cli_uuid
-			err := dbCheckCliSess(cli_uuid, orderid)
+			err := dbCheckOrderCliSess(cli_uuid, orderid)
 
 			if err != nil {
 				ret404(c)
@@ -147,19 +172,19 @@ func getOrder(c *gin.Context) {
 }
 
 func sendFact(c *gin.Context) {
-	token := c.Request.Header.Get("token")
+	token := c.Request.Header.Get("Authorization")
 	cli_uuid := c.Query("cli_uuid")
 	orderid, err := strconv.ParseInt(c.Query("order_id"), 10, 64)
-	mail := c.Query("mail")
+	// mail := c.Query("mail")
 
-	if token != "" && orderid != 0 && err == nil && mail != "" {
+	if token != "" && orderid != 0 && err == nil {
 		// check cli token
 		_, err := dbCheckCliToken(token)
 
 		if err != nil {
 			ret404(c)
 		} else {
-			err := dbCheckCliSess(cli_uuid, orderid)
+			err := dbCheckOrderCliSess(cli_uuid, orderid)
 
 			if err != nil {
 				ret404(c)
@@ -170,12 +195,13 @@ func sendFact(c *gin.Context) {
 					ret404(c)
 				} else {
 					// let's send this fact
-					err := eapMail.SendCliFact(link, mail)
-					if err != nil {
-						ret503(c)
-					} else {
-						c.JSON(200, "mail send")
-					}
+					// err := eapMail.SendCliFact(link, mail)
+					// if err != nil {
+					// 	ret503(c)
+					// } else {
+					// 	c.JSON(200, "mail send")
+					// }
+					c.JSON(200, link)
 				}
 			}
 		}
@@ -199,6 +225,31 @@ func getFactLink(c *gin.Context) {
 		}
 	} else {
 		ret422(c)
+	}
+}
+
+func getAllTickets(c *gin.Context) {
+	etabid, err := checkAuth(c)
+	datemin := c.Query("date_min")
+	if datemin == "" {
+		datemin = "1997-05-01 15:40:00"
+	}
+	datemax := c.Query("date_max")
+	if datemax == "" {
+		datemax = "3000-02-01 00:00:00"
+	}
+
+	if etabid != 0 && err == nil {
+
+		// get fact link
+		tickets, err := dbGetAllTickets(etabid, datemin, datemax)
+		if err != nil {
+			ret404(c)
+		} else {
+			c.JSON(200, tickets)
+		}
+	} else {
+		ret401(c)
 	}
 }
 
@@ -253,6 +304,21 @@ func getEtabParams(c *gin.Context) {
 			ret404(c)
 		} else {
 			c.JSON(200, params)
+		}
+	}
+}
+
+func getQRs(c *gin.Context) {
+	etabid, err := checkAuth(c)
+
+	if err != nil {
+		ret401(c)
+	} else {
+		qr0, qr1, err := dbGetQRs(etabid)
+		if err != nil {
+			ret404(c)
+		} else {
+			c.JSON(200, gin.H{"qr0": qr0, "qr1": qr1})
 		}
 	}
 }
@@ -321,11 +387,13 @@ func getCSV(c *gin.Context) {
 		content, err := eapCSV.DbGetCSVFacts(start, end, etabid)
 
 		if err != nil {
+			fmt.Println(err)
 			ret404(c)
 		} else {
 
 			filepath, err := eapCSV.FactstoCSV(content, etabid, start, end)
 			if err != nil {
+				fmt.Println(err)
 				ret404(c)
 			} else {
 				c.JSON(200, filepath)

@@ -1,5 +1,7 @@
 package main
 
 func main() {
-	Router()
+	go Router()
+	Websocket()
 }
+

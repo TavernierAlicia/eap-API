@@ -14,9 +14,9 @@ func createQR(token string, context bool) (err error) {
 
 	var link string
 	if context {
-		link = "http://localhost:9999/bartender/" + token
+		link = "http://dashboard.easy-as-pie.fr/bartender/" + token
 	} else {
-		link = "http://localhost:9999/menu/" + token
+		link = "http://app.easy-as-pie.fr/qr/" + token
 	}
 	// Create the QRcode
 	qrCode, _ := qr.Encode(link, qr.M, qr.Auto)
@@ -28,9 +28,9 @@ func createQR(token string, context bool) (err error) {
 	var file *os.File
 	if context {
 
-		file, _ = os.Create(viper.GetString("links.cdn_qr") + "bartender/" + fmt.Sprintf("%v", token) + ".png")
+		file, _ = os.Create(viper.GetString("links.cdn_qr_dest") + "bartender/" + fmt.Sprintf("%v", token) + ".png")
 	} else {
-		file, _ = os.Create(viper.GetString("links.cdn_qr") + "menu_qr/" + fmt.Sprintf("%v", token) + ".png")
+		file, _ = os.Create(viper.GetString("links.cdn_qr_dest") + "menu_qr/" + fmt.Sprintf("%v", token) + ".png")
 	}
 	defer file.Close()
 
